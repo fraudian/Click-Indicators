@@ -1,0 +1,91 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: Windows
+            os: windows-latest
+            target: Win64
+
+          # macOS produces a single universal .dylib covering Intel and Apple Silicon, and the
+          # combine job below merges it into the same .geode as the Windows build.
+          - name: macOS
+            os: macos-latest
+            target: MacOS
+
+          # iOS is cross-compiled from a macOS runner and needs Xcode's iphoneos SDK, so it cannot
+          # share the Linux runners the Android targets use. The action's README does not list this
+          # target but its action.yml does accept it, maps it to OUTPUT_ID=ios, and uploads
+          # geode-build-ios - which the combine job below picks up with every other geode-build-*,
+          # so no change is needed there.
+          - name: iOS
+            os: macos-latest
+            target: iOS
+
+          # Android links against real exported symbols rather than hardcoded addresses, so a
+          # function this mod cannot find fails the build here instead of crashing someone's phone.
+          - name: Android 64
+            os: ubuntu-latest
+            target: Android64
+
+          - name: Android 32
+            os: ubuntu-latest
+            target: Android32
+
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: geode-sdk/build-geode-mod@main
+        id: build
+        with:
+          sdk: given
+          cli: latest
+          build-config: Release
+          target: ${{ matrix.config.target }}
+          combine: true
+          # Build Codegen from source instead of downloading a prebuilt one.
+          #
+          # The bindings are cloned from their main branch on every run, but Codegen is fetched
+          # as a prebuilt binary - so the moment bindings start using something the prebuilt
+          # parser does not understand, every target fails at configure time with a parse error
+          # in GeometryDash.bro and nothing here has changed. That happened with the
+          # [[renamed_from(...)]] attribute added in bindings 08e8dc5d.
+          #
+          # Building it here keeps the parser and the file it parses in step by construction,
+          # which is the version of this that does not need fixing again. It costs about a
+          # minute per target; a build that cannot start costs the whole release.
+          configure-args: -DSKIP_BUILDING_CODEGEN=OFF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.config.target }}
+          path: ${{ steps.build.outputs.build-output }}
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    needs: build
+    # combine action needs actions:write to delete intermediate artifacts
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: geode-sdk/build-geode-mod/combine@main
+        id: build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Click Indicators
+          path: ${{ steps.build.outputs.build-output }}

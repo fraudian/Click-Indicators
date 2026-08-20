@@ -1,0 +1,49 @@
+# Click Indicators
+
+> A practice mod for Geometry Dash 2.2, built on the Geode mod loader. It reads an
+> input macro from a player who already beat a level and draws, in game, the exact
+> frame you need to click on — then grades every press you make against that macro
+> in frames. $2.99, one payment. Built by one person, jackz.
+
+## What it actually does
+
+- Loads a macro (a recorded input file) for a level and overlays a timing cue on your screen.
+- Grades each press as a number of frames early or late, rather than "good" or "early".
+- Five cue styles: Ring, Classic, Converge, Pulse, Highway. You pick whichever your eyes follow.
+- The cue sits at one fixed offset you set yourself and does not drift between attempts.
+- Practising from a Start Pos deep in a level stays in sync; the correction is measured
+  from your own presses and remembered per spawn.
+- Per-gamemode toggles (cube, ship, ball, UFO, wave, robot, spider, swing), so the guide can
+  be switched off for modes where it gets in the way.
+- Can blank the guide between any two percentages, to practise a section unaided.
+- Works under speedhack: practise at 0.5x and the timing still lines up at 1x.
+- Records your own runs, including in practice mode.
+- Four sound packs: click, beep, wood, snap, with a separate tone for releasing a hold.
+
+## Macro formats it reads
+
+Silicate, GDR2, GDR, zBot, Mega Hack, ReplayBot, TASBOT, Echo, DDHOR, xBot, JSON.
+
+## Requirements and limits
+
+- Geometry Dash 2.2 with the Geode mod loader installed first.
+- Windows, macOS and Android. There is no iOS build.
+- Not distributed through the Geode mod index. You install it by putting the .geode file
+  in `Geometry Dash/geode/mods` yourself.
+- One device at a time. Signing in on another machine moves the licence and signs the old one out.
+- All sales are final; there are no refunds.
+
+## What it is not
+
+It is a practice tool, not a bot and not a cheat. It does not send inputs, change physics,
+or talk to the game's servers — it draws an overlay and measures presses you made yourself.
+It should be switched off for a verification attempt.
+
+## Links
+
+- [Site](https://clickindicators.com/): what it is, a live demo of the five cue styles, and the price.
+- [Account](https://clickindicators.com/account.html): sign in, buy, and download the current build.
+- [Terms](https://clickindicators.com/terms.html)
+- [Privacy](https://clickindicators.com/privacy.html)
+- [Discord](https://discord.gg/FncjJJNcES): support, and where releases are announced.
+- [Geode](https://geode-sdk.org/install/): the mod loader this requires.

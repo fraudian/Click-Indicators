@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Click Indicators — a Geometry Dash mod that draws the frame you have to click on</title>
+<meta name="description" content="A Geometry Dash practice mod. Load a macro from someone who already beat the level and it draws the exact frame you have to press on, then grades every press in frames. $2.99, one payment.">
+<link rel="canonical" href="https://clickindicators.com/">
+<link rel="icon" href="/favicon.png" type="image/png">
+<meta name="theme-color" content="#070B1A">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://clickindicators.com/">
+<meta property="og:site_name" content="Click Indicators">
+<meta property="og:title" content="Click Indicators — a Geometry Dash mod that draws the frame you have to click on">
+<meta property="og:description" content="Load a macro from someone who already beat the level. It draws the exact frame you have to press on and tells you how many frames off you were. $2.99, one payment.">
+<meta property="og:image" content="https://clickindicators.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Click Indicators — a Geometry Dash mod that draws the frame you have to click on">
+<meta name="twitter:description" content="Load a macro from someone who already beat the level. It draws the exact frame you have to press on and tells you how many frames off you were.">
+<meta name="twitter:image" content="https://clickindicators.com/og.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Click Indicators",
+  "applicationCategory": "GameApplication",
+  "applicationSubCategory": "Geometry Dash mod",
+  "operatingSystem": "Windows, macOS, Android",
+  "description": "A Geometry Dash practice mod that reads an input macro and draws the exact frame you have to click on, grading every press in frames.",
+  "url": "https://clickindicators.com/",
+  "image": "https://clickindicators.com/og.png",
+  "softwareRequirements": "Geometry Dash 2.2 with the Geode mod loader",
+  "author": { "@type": "Person", "name": "jackz" },
+  "offers": {
+    "@type": "Offer",
+    "price": "2.99",
+    "priceCurrency": "USD",
+    "category": "One-time purchase"
+  }
+}
+</script>
+
+<style>
+/* ===========================================================================
+   Two faces, both self-hosted, both variable.
+   Anybody carries the display voice: wide, squared, drawn out of arcade and
+   racing-era grotesques, which is the register Geometry Dash's own hard 30px
+   block geometry lives in. Archivo carries everything readable.
+   No monospace anywhere on this page - numbers get tabular-nums instead, which
+   gives real column alignment without the engineering costume.
+   =========================================================================== */
+@font-face{
+  font-family:"Anybody";
+  src:url("/anybody.woff2") format("woff2-variations");
+  font-weight:100 900; font-stretch:50% 150%; font-display:swap;
+}
+@font-face{
+  font-family:"Archivo";
+  src:url("/archivo.woff2") format("woff2-variations");
+  font-weight:400 900; font-stretch:62% 125%; font-display:swap;
+}
+
+/* ---------------------------------------------------------------------------
+   THE COLOUR LAW. Nine tokens, each with a stated place it is allowed.
+   Note what is NOT here: --verdict. Green is declared inside .machine and
+   nowhere else, so no chrome rule in this stylesheet can physically reach it.
+   That is the whole answer to "why doesn't this look like every other dark page
+   with a green accent" - because past the demo there is no green on this page.
+   --------------------------------------------------------------------------- */
+:root{
+  --ground:#070B1A;        /* page background. never a border, never text */
+  --chassis:#101833;       /* raised panel faces only - if it sits on this, it is a physical part */
+  /* Machined edges only: panel outlines, ruler ticks, row rules. Never a fill of
+     a text area, never type. Raised from #46598F, which measured 2.57:1 on the
+     chassis - under the 3:1 floor for meaningful non-text UI, and these ticks ARE
+     meaningful, they are the ruler. This clears 3.58 on chassis, 4.01 on ground. */
+  --seam:#5670AB;
+  --signal:#F2A81C;        /* the accent - sampled from the cube the renderer already draws */
+  --signal-under:#7A4A05;  /* the underside of a physical thing. never a top surface */
+  --legend:#EAF0FF;        /* primary type. cold bone, never pure white */
+  --legend-2:#98A6C8;      /* secondary type. a real token, not --legend at an opacity */
+  --ink:#0A0A0A;           /* type on --signal fields, and sprite-style outlines */
+
+  --display:"Anybody","Archivo",system-ui,sans-serif;
+  --body:"Archivo",system-ui,sans-serif;
+
+  /* Spacing is quantised to one physics step. Geometry Dash runs 240 a second,
+     so 6px = 1 step and 24px = 1 frame at 60fps. The window bar uses the same
+     unit as its cell pitch, so the page and the instrument share a grid. */
+  --step:6px;
+  --frame:24px;
+  --maxw:1200px;
+  --gutter:clamp(20px,4vw,40px);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--legend);
+  font-family:var(--body); font-size:16px; line-height:1.55; font-weight:400;
+  -webkit-font-smoothing:antialiased; font-synthesis:none;
+}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gutter)}
+h1,h2,h3{font-family:var(--display); font-weight:800; font-stretch:125%;
+  line-height:.92; letter-spacing:-.02em; margin:0; text-wrap:balance}
+a{color:inherit}
+::selection{background:var(--signal); color:var(--ink)}
+:focus-visible{outline:3px solid var(--signal); outline-offset:3px}
+
+/* ---------- top rail: a printed legend, not a sticky app bar ----------
+   The wordmark is left plain. An earlier version stamped signal squares over the
+   two i's as tittles, but Anybody's i already carries its own dot, so every i
+   rendered a dot AND a square on top of it and the whole thing read as a glitch.
+   The accent earns its place on the buy pill and the install numerals instead -
+   spending it here as decoration was the reason it looked wrong. */
+.rail{border-bottom:1px solid #172244}
+.rail .in{display:flex; align-items:center; justify-content:space-between;
+  gap:20px; min-height:64px; flex-wrap:wrap; padding:12px 0}
+.mark{display:inline-flex; align-items:center; gap:11px; text-decoration:none;
+  white-space:nowrap; color:var(--legend);
+  font-family:var(--display); font-weight:800; font-stretch:118%;
+  font-size:20px; letter-spacing:.005em}
+/* The mod's own icon, cropped out of og.png at 130px and resampled to 56 so it
+   renders at 2x in a 28px slot. It carries its own green: that is the product's
+   mark, not page chrome, and it is the one sanctioned exception to the rule that
+   green lives only inside the machine. */
+.mark img{width:28px; height:28px; display:block; flex:none}
+.railmeta{display:flex; align-items:center; gap:14px; font-size:14px; color:var(--legend-2)}
+.railmeta span{display:flex; align-items:center; gap:14px}
+.railmeta span::after{content:""; width:1px; height:13px; background:var(--seam)}
+.railmeta a{color:var(--legend); text-decoration:none; border-bottom:1px solid transparent}
+.railmeta a:hover{border-bottom-color:var(--signal)}
+
+/* ---------- 1. THE MACHINE ---------- */
+/* Words on the left, the instrument on the right. Measured: stacking these and
+   keeping the buy control inside the chassis made the machine 841px tall, which
+   put the five keycaps 234px below the fold on a 987px screen and far worse on a
+   1366x768 laptop - so nobody would ever discover that the demo is operable.
+   A fixed narrow text column keeps the canvas wide and the keycaps on screen. */
+.machine-wrap{padding:clamp(28px,4vw,44px) 0 clamp(48px,7vw,96px)}
+.lede h1{font-size:clamp(34px,4.6vw,60px); max-width:15ch}
+.lede p{font-size:17px; color:var(--legend-2); max-width:48ch; margin:18px 0 0}
+.lede p b{color:var(--legend); font-weight:500}
+
+@media (min-width:1100px){
+  .machine-wrap .wrap{display:grid; grid-template-columns:minmax(360px,440px) 1fr;
+    grid-template-rows:auto 1fr; gap:0 44px; align-items:start}
+  .lede{grid-column:1; grid-row:1}
+  .buy {grid-column:1; grid-row:2}
+  .machine{grid-column:2; grid-row:1 / span 2; margin-top:0}
+  /* Anybody is a wide face - at 60px only about five characters fit a 370px
+     column, which shredded the headline into six ragged lines. */
+  .lede h1{font-size:clamp(32px,3.2vw,46px)}
+}
+
+/* the chassis is one continuous object: glass, instrument, controls, price.
+   0 radius, a hard unblurred offset shadow, fasteners cut into the corners. */
+.machine{
+  position:relative; margin-top:28px; background:var(--chassis);
+  border:3px solid var(--seam); border-radius:0;
+  box-shadow:6px 6px 0 var(--signal-under);
+}
+/* four fasteners cut into the corners of the housing */
+.fastener{position:absolute; width:8px; height:8px; background:var(--ground);
+  pointer-events:none}
+.fastener.tl{top:6px; left:6px} .fastener.tr{top:6px; right:6px}
+.fastener.bl{bottom:6px; left:6px} .fastener.br{bottom:6px; right:6px}
+
+.glass{padding:20px 20px 0}
+.glass .bezel{border:2px solid var(--ink); background:#000; line-height:0}
+.glass canvas{display:block; width:100%; height:auto}
+
+/* ---------- THE SIGNATURE: the window bar ----------
+   Bolted directly under the glass, driven off the renderer's own clock, so the
+   playhead crosses into the lit run on the exact frame the cue turns green
+   above it. One clock, two representations of it.
+   Cells are one frame wide at 60fps. The lit run is the frames where the click
+   actually registers - the whole product argument as an object: the window is
+   small, it is finite, and it has edges you can count. */
+.machine{ --verdict:#35E07F; }   /* declared HERE. not on :root. */
+
+.bar{margin:20px 0 0; border-top:1px solid var(--seam); background:#0A1128;
+  padding:12px 20px 8px; overflow-x:auto; overscroll-behavior-x:contain}
+/* 44px tall: a 26px lane the cells live in, and 18px below it for frame numbers,
+   so the lit run never sits underneath a label. */
+.cells{position:relative; display:flex; height:44px; min-width:min-content}
+.cells i{position:relative; flex:0 0 var(--frame); height:100%; display:block}
+.cells i::before{content:""; position:absolute; left:50%; top:6px; width:3px; height:15px;
+  transform:translateX(-50%); background:var(--seam)}
+.cells i.lit::after{content:""; position:absolute; inset:0 0 18px 0; background:var(--verdict)}
+.cells i.lit::before{background:#0A1128; opacity:.4; z-index:1}
+.cells i[data-f] b{position:absolute; left:50%; bottom:0; transform:translateX(-50%);
+  font-size:12px; font-weight:500; color:var(--legend-2);
+  font-variant-numeric:tabular-nums; line-height:1}
+.playhead{position:absolute; top:0; left:0; width:2px; height:26px; z-index:2;
+  background:var(--signal); will-change:transform}
+.playhead::before{content:""; position:absolute; top:0; left:-4px;
+  border-left:5px solid transparent; border-right:5px solid transparent;
+  border-top:6px solid var(--signal)}
+.barfoot{display:flex; justify-content:space-between; align-items:center; gap:16px;
+  padding:12px 20px 0; flex-wrap:wrap}
+.hint{font-size:14px; color:var(--legend-2); margin:0}
+.hint b{color:var(--legend); font-weight:500}
+/* reserved height so the first press doesn't shove the keycaps down the page */
+.chips{display:flex; gap:6px; align-items:center; min-height:27px; flex-wrap:wrap}
+.chip{font-size:13px; font-weight:500; font-variant-numeric:tabular-nums;
+  padding:3px 8px; border:1px solid var(--seam); color:var(--legend); white-space:nowrap}
+.machine .chip.perfect{color:var(--verdict); border-color:var(--verdict)}
+.chip.miss{color:var(--legend-2)}
+
+/* ---------- control row: five keycaps that physically travel ---------- */
+.controls{padding:18px 20px}
+.caps{display:flex; gap:6px; flex-wrap:wrap}
+.cap{
+  appearance:none; cursor:pointer; font-family:var(--body); font-size:14px; font-weight:700;
+  color:var(--legend); background:var(--chassis); border:2px solid var(--ink);
+  border-radius:0; padding:0 14px; height:44px;
+  box-shadow:0 4px 0 var(--signal-under);
+  transition:transform .06s linear, box-shadow .06s linear, color .12s linear;
+}
+.cap:hover{color:#fff}
+.cap:active,.cap[aria-selected="true"]{transform:translateY(4px); box-shadow:0 0 0 var(--signal-under)}
+.cap[aria-selected="true"]{border-color:var(--signal); color:var(--signal)}
+@media (prefers-reduced-motion:reduce){ .cap{transition:none} }
+
+/* the buy control lives with the words, not inside the instrument */
+.buy{display:flex; flex-direction:column; align-items:flex-start; gap:12px; margin-top:28px;
+  padding-top:24px; border-top:1px solid #172244}
+.price{font-family:var(--display); font-weight:800; font-stretch:125%; font-size:40px;
+  line-height:1; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.price em{font-style:normal; font-size:.4em; color:var(--legend-2); margin-left:.3em}
+.pill{
+  display:inline-block; text-decoration:none; border-radius:999px; padding:13px 22px;
+  font-size:15px; font-weight:700; border:2px solid var(--signal); background:var(--signal);
+  color:var(--ink); box-shadow:0 4px 0 var(--signal-under);
+  transition:transform .06s linear, box-shadow .06s linear;
+}
+.pill:active{transform:translateY(4px); box-shadow:0 0 0 var(--signal-under)}
+.pill.soon{background:var(--chassis); border-color:var(--seam); color:var(--legend-2);
+  box-shadow:none; cursor:pointer}
+.pill.owned{background:var(--chassis); border-color:var(--signal); color:var(--signal);
+  box-shadow:none}
+.buynote{font-size:14px; color:var(--legend-2); max-width:42ch}
+@media (prefers-reduced-motion:reduce){ .pill{transition:none} }
+
+/* ---------- 2. the clip. hidden until the file exists. ---------- */
+/* NOTE ON SPECIFICITY, because this bit bit hard: .wrap sets `padding: 0 var(--gutter)`
+   and that shorthand zeroes top and bottom. Any later rule that wants vertical
+   padding on a .wrap element must (a) beat 0,1,0 and (b) use LONGHAND, or it either
+   loses outright or wipes the horizontal gutter. Every section on this page silently
+   collapsed to padding:0 until this was fixed. */
+.clip{padding-bottom:clamp(48px,7vw,96px)}
+.clip video{display:block; width:100%; height:auto; border:2px solid var(--ink); background:#000}
+.clip figcaption{font-size:16px; color:var(--legend-2); margin-top:12px}
+
+/* ---------- 3. install, deliberately second ---------- */
+section.wrap{padding-top:clamp(48px,7vw,96px); padding-bottom:clamp(48px,7vw,96px)}
+.say{font-size:19px; max-width:62ch; margin:0}
+.say b{font-weight:500}
+.strip{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:36px}
+@media (max-width:900px){ .strip{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:520px){ .strip{grid-template-columns:1fr} }
+.card{background:var(--chassis); border:1px solid var(--seam); padding:20px}
+.card .n{font-family:var(--display); font-weight:800; font-stretch:125%; font-size:40px;
+  line-height:1; color:var(--signal); font-variant-numeric:tabular-nums; display:block;
+  margin-bottom:12px}
+.card p{margin:0; font-size:15px; color:var(--legend-2)}
+.card p b{color:var(--legend); font-weight:500}
+.path{display:flex; align-items:center; gap:8px; margin-top:12px;
+  border:1px solid var(--seam); background:var(--ground); padding:7px 9px}
+.path code{font-family:var(--body); font-size:14px; letter-spacing:.01em; color:var(--legend);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.copy{appearance:none; cursor:pointer; margin-left:auto; background:transparent;
+  border:1px solid var(--seam); color:var(--legend-2); font-family:var(--body);
+  font-size:12px; font-weight:700; padding:3px 7px; border-radius:0;
+  transition:color .12s linear, border-color .12s linear}
+.copy:hover{color:var(--signal); border-color:var(--signal)}
+
+/* ---------- 4. grading. a heading and a readout, no spec list. ---------- */
+.grade h2{font-size:clamp(28px,4.4vw,56px); max-width:18ch}
+.grade .cols{display:grid; grid-template-columns:340px 1fr; gap:48px; margin-top:36px;
+  align-items:start}
+@media (max-width:820px){ .grade .cols{grid-template-columns:1fr; gap:28px} }
+.readout{background:var(--chassis); border:1px solid var(--seam)}
+.readout .row{display:flex; justify-content:space-between; align-items:baseline; gap:16px;
+  padding:11px 16px; border-bottom:1px solid #1B2648; font-variant-numeric:tabular-nums}
+.readout .row:last-child{border-bottom:0}
+.readout .row span:first-child{font-size:14px; color:var(--legend-2)}
+.readout .row span:last-child{font-size:16px; font-weight:500}
+/* Deliberately NOT green. Green is quarantined to the machine, and the test for
+   that is literal: scroll past the instrument and the page has no green pixels.
+   "perfect" carries its own meaning; it does not need the colour, and keeping the
+   colour rare is what makes it register inside the demo. */
+.readout .row.is-perfect span:last-child{color:var(--legend); font-weight:700}
+.gradetext p{font-size:16px; color:var(--legend-2); max-width:56ch; margin:0 0 16px}
+.gradetext p b{color:var(--legend); font-weight:500}
+
+/* ---------- 5. the spec plate. no heading at all. ---------- */
+section.plate{border-top:3px solid var(--seam); padding-top:clamp(28px,3.5vw,44px)}
+.specs{display:grid; grid-template-columns:1fr 1fr; gap:0 48px}
+@media (max-width:820px){ .specs{grid-template-columns:1fr} }
+.specs > div{display:grid; grid-template-columns:150px 1fr; gap:20px;
+  padding:14px 0; border-bottom:1px solid #172244; align-items:baseline}
+.specs dt{font-size:14px; color:var(--legend-2)}
+.specs dd{margin:0; font-size:16px; font-weight:500; font-variant-numeric:tabular-nums}
+.fmts{margin-top:36px}
+.fmts h3{font-size:22px; margin-bottom:14px}
+.tags{display:flex; flex-wrap:wrap; gap:6px}
+.tag{font-size:14px; font-weight:500; padding:5px 10px; border:1px solid var(--seam);
+  border-radius:3px; color:var(--legend)}
+.tag.no{background:var(--seam); color:var(--ground); border-color:var(--seam)}
+
+/* ---------- 6. faq. no accordion. ---------- */
+.faq{display:grid; gap:0}
+.faq > div{padding:20px 0; border-bottom:1px solid #172244}
+.faq h3{font-size:22px; margin-bottom:8px}
+.faq p{margin:0; font-size:16px; color:var(--legend-2); max-width:70ch}
+.faq p b{color:var(--legend); font-weight:500}
+
+/* ---------- footer plate ---------- */
+footer{background:var(--chassis); border-top:1px solid var(--seam); padding:28px 0 40px}
+.foot{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap;
+  font-size:14px; color:var(--legend-2)}
+.foot a{color:var(--legend-2); text-decoration:none; border-bottom:1px solid transparent}
+.foot a:hover{color:var(--legend); border-bottom-color:var(--seam)}
+.foot nav{display:flex; gap:16px; flex-wrap:wrap}
+
+/* ---------- PHONE ----------------------------------------------------------
+   This block lives at the very END of the stylesheet on purpose. An earlier
+   version sat up with the rail rules, and every declaration in it that targeted
+   something defined further down (.glass, .bar, .controls) lost, because at
+   equal specificity the later rule wins. Same failure as the .wrap padding one.
+   Keep phone overrides last.
+   Two things it fixes: the platform list was wrapping onto its own row and
+   costing ~50px of the first screen for information the spec plate already
+   carries as chips, and the housing was padded so generously that the five
+   keycaps landed at 900px on an 844px screen - so nobody would discover the
+   demo is operable. Measured, not guessed.
+   --------------------------------------------------------------------------- */
+@media (max-width:640px){
+  .rail .in{flex-wrap:nowrap; gap:12px; min-height:56px; padding:8px 0}
+  .railmeta span{display:none}
+  .mark{font-size:18px; gap:9px}
+  .mark img{width:26px; height:26px}
+
+  .machine-wrap{padding-top:18px}
+  .lede h1{font-size:clamp(30px,8.2vw,38px)}
+  .lede p{font-size:16px; margin-top:14px}
+  .glass{padding:12px 12px 0}
+  .bar{margin-top:14px; padding:10px 12px 6px}
+  .barfoot{padding:10px 12px 0}
+  .controls{padding:14px 12px}
+  /* Five caps need ~335px and a 390px phone gives the row 305, so they cannot all
+     fit at a readable size. Wrapping cost 50px of height and pushed them off the
+     screen; forcing nowrap alone pushed "Highway" 15px past the housing edge.
+     So the row scrolls sideways instead - one 44px line, nothing clipped, and the
+     caps running to the edge is its own affordance that there are more. */
+  .caps{gap:5px; flex-wrap:nowrap; overflow-x:auto; overscroll-behavior-x:contain;
+    scrollbar-width:none; -webkit-overflow-scrolling:touch}
+  .caps::-webkit-scrollbar{display:none}
+  .cap{font-size:12.5px; padding:0 10px; letter-spacing:0; flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <div class="wrap in">
+    <a class="mark" href="#top"><img src="/mark.png" alt="" width="28" height="28">click indicators</a>
+    <div class="railmeta">
+      <span>Windows, macOS, Android</span>
+      <a href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener">Discord</a>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+
+  <!-- 1. THE MACHINE ------------------------------------------------------ -->
+  <div class="machine-wrap">
+    <div class="wrap">
+      <div class="lede">
+        <h1>It draws the exact frame you have to click on.</h1>
+        <p>Load a macro from someone who already beat the level. Click Indicators puts their
+          input into your game, in front of you, while you play, and tells you how many frames
+          off every one of your presses was. <b>Learn the timing, switch it off, beat it
+          yourself.</b></p>
+      </div>
+
+      <div class="machine" id="machine">
+        <span class="fastener tl"></span><span class="fastener tr"></span>
+        <span class="fastener bl"></span><span class="fastener br"></span>
+
+        <div class="glass">
+          <div class="bezel">
+            <canvas id="view" width="1300" height="440"
+              aria-label="A Geometry Dash cube running toward a spike, with a ring cue collapsing onto it and turning green on the frames where the click registers"></canvas>
+          </div>
+        </div>
+
+        <div class="bar">
+          <div class="cells" id="cells" role="img"
+            aria-label="A ruler of single frames. The lit run marks the frames where the click registers.">
+            <div class="playhead" id="playhead"></div>
+          </div>
+        </div>
+        <div class="barfoot">
+          <p class="hint">One cell is one frame. Press <b>space</b> to grade yourself.</p>
+          <div class="chips" id="chips" aria-live="polite" aria-label="Your last presses"></div>
+        </div>
+
+        <div class="controls">
+          <div class="caps" role="tablist" aria-label="Cue style">
+            <button class="cap" role="tab" data-style="ring"     aria-selected="true">Ring</button>
+            <button class="cap" role="tab" data-style="classic"  aria-selected="false">Classic</button>
+            <button class="cap" role="tab" data-style="converge" aria-selected="false">Converge</button>
+            <button class="cap" role="tab" data-style="pulse"    aria-selected="false">Pulse</button>
+            <button class="cap" role="tab" data-style="highway"  aria-selected="false">Highway</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sits under the words on desktop, but AFTER the machine in source order so
+           that on a phone the running instrument comes first and the price second.
+           Most of this traffic is a Discord link opened on Android. -->
+      <div class="buy">
+        <p class="price">$2.99<em>USD</em></p>
+        <a class="pill soon" id="pill" href="https://discord.gg/FncjJJNcES"
+          target="_blank" rel="noopener">Launching soon</a>
+        <p class="buynote" id="buynote">One payment. No subscription, no launcher, no
+          expiring key.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. THE CLIP (hidden until demo.mp4 exists) --------------------------- -->
+  <div class="clip wrap" id="clip" hidden>
+    <figure style="margin:0">
+      <video id="demoVideo" muted loop playsinline preload="metadata" poster="/demo-poster.jpg">
+        <source src="/demo.mp4" type="video/mp4">
+      </video>
+      <figcaption id="clipCap">The ring cue running in game.</figcaption>
+    </figure>
+  </div>
+
+  <!-- 3. INSTALL ----------------------------------------------------------- -->
+  <section class="wrap">
+    <p class="say">Click Indicators isn't on the Geode index, so you install it yourself.
+      <b>Download the .geode file and drop it in your mods folder.</b> That's the whole thing,
+      it takes about a minute.</p>
+    <div class="strip">
+      <div class="card">
+        <span class="n">01</span>
+        <p>Buy it here. The download shows up in your account straight away.</p>
+      </div>
+      <div class="card">
+        <span class="n">02</span>
+        <p>Close Geometry Dash. <b>Geode only loads mods while the game starts up.</b></p>
+      </div>
+      <div class="card">
+        <span class="n">03</span>
+        <p>Put the file in your mods folder.</p>
+        <div class="path">
+          <code id="pathText">Geometry Dash/geode/mods</code>
+          <button class="copy" type="button" id="copyPath">Copy</button>
+        </div>
+      </div>
+      <div class="card">
+        <span class="n">04</span>
+        <p>Start the game and sign in inside the mod with the same account.</p>
+      </div>
+    </div>
+    <p class="say" style="margin-top:28px; color:var(--legend-2)">You need
+      <a href="https://geode-sdk.org/install/" target="_blank" rel="noopener"
+        style="color:var(--legend)">Geode</a> installed first. That part is one click.</p>
+  </section>
+
+  <!-- 4. GRADING ----------------------------------------------------------- -->
+  <section class="wrap grade">
+    <h2>You're not bad at it. You're three frames early.</h2>
+    <div class="cols">
+      <div class="readout" id="readout" aria-label="Example grading readout">
+        <div class="row"><span>Attempt 41</span><span>2f early</span></div>
+        <div class="row is-perfect"><span>Attempt 42</span><span>perfect</span></div>
+        <div class="row"><span>Attempt 43</span><span>1f late</span></div>
+        <div class="row"><span>Attempt 44</span><span>3f early</span></div>
+        <div class="row"><span>Attempt 45</span><span>2f early</span></div>
+      </div>
+      <div class="gradetext">
+        <p>Every press is measured against the macro and reported as a number of frames, not as
+          "good" or "early". <b>A consistent 3-frame error is a habit you can correct.</b> "Almost"
+          is not.</p>
+        <p>The cue sits at one fixed offset that you set yourself, and it does not drift between
+          attempts, because a mark that moves is worse to play against than one that sits still.</p>
+        <p>Practising from a Start Pos deep in a level stays in sync. The correction is measured
+          from your own presses and remembered for that spawn.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. THE SPEC PLATE ---------------------------------------------------- -->
+  <section class="wrap plate">
+    <dl class="specs">
+      <div><dt>Grading</dt><dd>Frames early or late, per press</dd></div>
+      <div><dt>Holds</dt><dd>Flags releasing too soon</dd></div>
+      <div><dt>Cue lead</dt><dd>One fixed offset you set</dd></div>
+      <div><dt>Per gamemode</dt><dd>Cube, ship, ball, UFO, wave, robot, spider, swing</dd></div>
+      <div><dt>Hide a section</dt><dd>Blank the guide between any two percentages</dd></div>
+      <div><dt>Speedhack</dt><dd>Practise at 0.5&times;, timing holds at 1&times;</dd></div>
+      <div><dt>Cue styles</dt><dd>Ring, Classic, Converge, Pulse, Highway</dd></div>
+      <div><dt>Sound packs</dt><dd>Click, beep, wood, snap</dd></div>
+      <div><dt>Recording</dt><dd>Your own runs, including in practice mode</dd></div>
+      <div><dt>Requires</dt><dd>Geometry Dash 2.2 with Geode</dd></div>
+    </dl>
+
+    <div class="fmts">
+      <h3>Macro formats it reads</h3>
+      <div class="tags">
+        <span class="tag">Silicate</span><span class="tag">GDR2</span><span class="tag">GDR</span>
+        <span class="tag">zBot</span><span class="tag">Mega Hack</span><span class="tag">ReplayBot</span>
+        <span class="tag">TASBOT</span><span class="tag">Echo</span><span class="tag">DDHOR</span>
+        <span class="tag">xBot</span><span class="tag">JSON</span>
+      </div>
+    </div>
+
+    <div class="fmts">
+      <h3>Platforms</h3>
+      <div class="tags">
+        <span class="tag">Windows</span><span class="tag">macOS</span><span class="tag">Android</span>
+        <span class="tag no">iOS &mdash; no</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. FAQ --------------------------------------------------------------- -->
+  <section class="wrap">
+    <div class="faq">
+      <div>
+        <h3>Does it work on the current version of Geometry Dash?</h3>
+        <p>It's built for <b>2.2</b> and runs through Geode, so it keeps working as long as Geode
+          does. When GD updates and Geode catches up, the mod gets rebuilt against it and the new
+          build appears in your account.</p>
+      </div>
+      <div>
+        <h3>Does it conflict with Mega Hack?</h3>
+        <p>No. They're both Geode mods and they load alongside each other. Click Indicators only
+          draws an overlay and reads your input timing.</p>
+      </div>
+      <div>
+        <h3>Will this get me banned, or flag a level submission?</h3>
+        <p>It doesn't touch your inputs, your physics, or the game's servers. It draws on top of
+          the screen and grades what you already pressed. <b>It's a practice tool, not something to
+          run on a verification attempt.</b> If you're submitting a run, turn it off.</p>
+      </div>
+      <div>
+        <h3>Is a level really yours if you learned it with this?</h3>
+        <p>You still have to hit every input yourself, at speed, without the mod on. What it
+          removes is the guessing about <i>when</i>. That's the same thing a practice-mode
+          checkpoint or a slowed-down clip does, drawn where you're already looking.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>$2.99 one payment &nbsp;&nbsp; All sales are final &nbsp;&nbsp; Built by jackz
+      <span id="verline"></span></span>
+    <nav>
+      <a href="/account.html">Account</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener">Discord</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+/* ===========================================================================
+   The renderer. Unchanged from the version that was verified drawing correctly:
+   Geometry Dash is on a 30px grid, the icon is one unit, spikes are one unit,
+   the ground is three. Everything is sized in units so proportions survive any
+   canvas size. The cube's eyes and mouth are measured fractions of the real
+   sprite. Only one canvas exists on this page now, so only one rAF loop runs.
+   =========================================================================== */
+(function(){
+  "use strict";
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var SKY_TOP="#1B2FB8", SKY_BOT="#3E62FF",
+      BLK="#3355F2",
+      GND_TOP="#16249E", GND_BOT="#050A2B", GND_LINE="rgba(255,255,255,.10)",
+      CUBE="#F2A81C", INK="#0A0A0A", FACE="#3FD2F5", TRAIL="#BFF0FF";
+
+  function rng(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0;
+    var t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296; }; }
+
+  function buildWall(cols, rows, seed){
+    var r = rng(seed), grid = new Array(cols*rows).fill(0), out = [];
+    for(var y=0;y<rows;y++) for(var x=0;x<cols;x++){
+      if(grid[y*cols+x]) continue;
+      var maxW=1; while(maxW<4 && x+maxW<cols && !grid[y*cols+x+maxW]) maxW++;
+      var w = 1 + Math.floor(r()*maxW);
+      var maxH=1, ok=true;
+      while(ok && maxH<3 && y+maxH<rows){
+        for(var i=0;i<w;i++) if(grid[(y+maxH)*cols+x+i]){ ok=false; break; }
+        if(ok) maxH++;
+      }
+      var h = 1 + Math.floor(r()*maxH);
+      for(var b=0;b<h;b++) for(var a=0;a<w;a++) grid[(y+b)*cols+x+a]=1;
+      out.push({x:x,y:y,w:w,h:h});
+    }
+    return out;
+  }
+
+  var WALLS = new WeakMap(), AR = new WeakMap();
+
+  /* The demo's clock. Shared by the canvas AND the window bar, so the playhead
+     crossing into the lit run and the cue turning green are the same event. */
+  var CYCLE = 2.6, TP = 1.65, JUMP = 0.62;
+  /* The window where a press registers, in seconds either side of the press
+     moment. Six frames total. A hard timing in Geometry Dash is about this
+     wide - a wider one here would make the bar look forgiving, which is the
+     opposite of the thing being sold. */
+  var ARM_LO = -0.033, ARM_HI = 0.05;
+  var FPS = 60;
+
+  function scene(cv, style, t){
+    if(!AR.has(cv)) AR.set(cv, cv.width/cv.height);
+    var ar = AR.get(cv);
+    var W = cv.clientWidth || 640, H = W/ar;
+    var dpr = Math.min(devicePixelRatio||1, 2);
+    cv.style.height = H + "px";
+    if(cv.width !== Math.round(W*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+    var c = cv.getContext("2d");
+    c.setTransform(dpr,0,0,dpr,0,0);
+    c.imageSmoothingEnabled = false;
+
+    var U = H / 9.5, GND_H = U * 2.6, GY = H - GND_H, SPEED = U * 10.4;
+
+    var cyc = reduce ? TP + 0.02 : (t % CYCLE);
+    var armed = cyc >= TP + ARM_LO && cyc <= TP + ARM_HI;
+    var frac  = cyc >= TP ? 0 : Math.min(1, Math.max(0,(TP - cyc)/1.30));
+    var ease  = Math.pow(frac, 0.6);
+    var hit   = cyc < TP ? 0 : Math.min(1,(cyc-TP)/0.32);
+
+    var cubeX = W * 0.32;
+    var jt = cyc - TP, lift = 0, rot = 0;
+    if(jt > 0 && jt < JUMP){
+      var u = jt / JUMP;
+      lift = 4 * (2.7*U) * u * (1-u);
+      rot  = u * Math.PI;
+    }
+    var cubeCY = GY - U/2 - lift;
+
+    var sky = c.createLinearGradient(0,0,0,GY);
+    sky.addColorStop(0, SKY_TOP); sky.addColorStop(1, SKY_BOT);
+    c.fillStyle = sky; c.fillRect(0,0,W,GY);
+
+    var cell = U * 1.15, cols = 9, rows = Math.max(3, Math.round(GY/cell));
+    var key = cols+":"+rows, cache = WALLS.get(cv);
+    if(!cache || cache.key !== key){ cache = { key:key, rects:buildWall(cols,rows,7) }; WALLS.set(cv,cache); }
+    var bandW = cols*cell, par = ((t * SPEED * 0.5) % bandW), cellH = GY/rows;
+    for(var ox = -par - bandW; ox < W + bandW; ox += bandW){
+      for(var i=0;i<cache.rects.length;i++){
+        var q = cache.rects[i];
+        var bx = ox + q.x*cell, by = q.y*cellH;
+        var seam = Math.max(2.5, U*0.09);
+        var bw = q.w*cell - seam, bh = q.h*cellH - seam;
+        if(bx > W || bx+bw < 0) continue;
+        c.fillStyle = BLK; c.globalAlpha = 0.34 + ((i*7)%5)*0.035;
+        c.fillRect(bx,by,bw,bh); c.globalAlpha = 1;
+        c.fillStyle = "rgba(255,255,255,.055)";
+        c.fillRect(bx, by, bw, Math.max(1.4, U*0.045));
+      }
+    }
+    var glow = c.createLinearGradient(0,GY-U*3.4,0,GY);
+    glow.addColorStop(0,"rgba(90,130,255,0)"); glow.addColorStop(1,"rgba(120,160,255,.30)");
+    c.fillStyle = glow; c.fillRect(0,GY-U*3.4,W,U*3.4);
+
+    function spike(sx){
+      if(sx < -U*2 || sx > W+U*2) return;
+      var half = U*0.5, hgt = U*0.98;
+      c.beginPath();
+      c.moveTo(sx-half, GY); c.lineTo(sx, GY-hgt); c.lineTo(sx+half, GY);
+      c.closePath();
+      c.fillStyle = "#0A0A12"; c.fill();
+      c.strokeStyle = "#fff"; c.lineWidth = Math.max(1.8, U*0.085);
+      c.lineJoin = "miter"; c.stroke();
+    }
+    var sx0 = cubeX + SPEED * (TP + 0.31 - cyc);
+    spike(sx0); spike(sx0 + SPEED*CYCLE); spike(sx0 - SPEED*CYCLE);
+
+    var gg = c.createLinearGradient(0,GY,0,H);
+    gg.addColorStop(0, GND_TOP); gg.addColorStop(1, GND_BOT);
+    c.fillStyle = gg; c.fillRect(0,GY,W,GND_H);
+    var step = U*3, gsp = (t*SPEED) % step;
+    c.strokeStyle = GND_LINE; c.lineWidth = 2;
+    for(var gx=-gsp; gx<W+step; gx+=step){
+      c.beginPath(); c.moveTo(gx,GY); c.lineTo(gx,H); c.stroke();
+    }
+    c.save();
+    c.shadowColor = "rgba(180,215,255,.9)"; c.shadowBlur = U*0.55;
+    c.fillStyle = "#fff"; c.fillRect(0, GY-Math.max(1.5,U*0.055), W, Math.max(3,U*0.11));
+    c.restore();
+
+    if(!reduce){
+      for(var p=0;p<12;p++){
+        var age = ((t*2.1 + p*0.083) % 1);
+        var px = cubeX - U*0.55 - age*U*4.2;
+        var py = (lift>0 ? cubeCY + U*0.42 : GY - U*0.12) - (p%3)*U*0.09 - age*U*0.25;
+        var sz = (1 - age) * U*0.15;
+        if(sz < 0.6) continue;
+        c.globalAlpha = (1-age)*0.7; c.fillStyle = TRAIL;
+        c.fillRect(px, py-sz, sz, sz);
+      }
+      c.globalAlpha = 1;
+    }
+
+    c.save();
+    c.translate(cubeX, cubeCY); c.rotate(rot);
+    var half = U*0.5, lw = Math.max(1.2, U*0.05), in0 = half - lw/2;
+    c.lineJoin = "miter"; c.lineCap = "butt";
+    c.beginPath(); c.rect(-in0,-in0,in0*2,in0*2);
+    c.fillStyle = CUBE; c.fill();
+    c.save(); c.clip();
+    c.fillStyle = "rgba(0,0,0,.10)";
+    c.beginPath(); c.moveTo(half,-half); c.lineTo(half,half); c.lineTo(-half,half);
+    c.closePath(); c.fill();
+    c.restore();
+    c.beginPath(); c.rect(-in0,-in0,in0*2,in0*2);
+    c.strokeStyle = INK; c.lineWidth = lw; c.stroke();
+    c.fillStyle = FACE; c.strokeStyle = INK; c.lineWidth = Math.max(1, lw*0.75);
+    var ew = U*0.150, eh = U*0.144;
+    [-1,1].forEach(function(sg){
+      c.beginPath(); c.rect(sg*U*0.188 - ew/2, -U*0.227 - eh/2, ew, eh); c.fill(); c.stroke();
+    });
+    var mw = U*0.639, mh = U*0.129;
+    c.beginPath(); c.rect(-mw/2, U*0.099 - mh/2, mw, mh); c.fill(); c.stroke();
+    c.restore();
+
+    var GREEN="#3BFF87", IDLE="#EDF6FF";
+    var cue = armed ? GREEN : IDLE;
+    var lw2 = Math.max(2.0, U*0.082) * (armed?1.4:1);
+    var topY = U*0.35, botY = GY + GND_H*0.55, cy = GY - U/2;
+
+    function seg(x1,y1,x2,y2,w,col){
+      c.save();
+      c.lineCap="round"; c.strokeStyle=col; c.lineWidth=w;
+      c.shadowColor=col; c.shadowBlur=U*0.42;
+      c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2);
+      c.stroke(); c.stroke();
+      c.restore();
+    }
+    function ring(x,y,r,w,col){
+      if(r<=1) return;
+      c.save();
+      c.strokeStyle=col; c.lineWidth=w;
+      c.shadowColor=col; c.shadowBlur=U*0.42;
+      c.beginPath(); c.arc(x,y,r,0,6.2832);
+      c.stroke(); c.stroke();
+      c.restore();
+    }
+
+    c.save();
+    var reticle = armed?GREEN:"rgba(255,255,255,.55)";
+    if(style==="ring"){
+      seg(cubeX,topY,cubeX,botY, armed?lw2:Math.max(1.6,U*0.056), reticle);
+      ring(cubeX,cy,U*0.86,Math.max(1.6,U*0.058),"rgba(255,255,255,.42)");
+      for(var k=0;k<4;k++){
+        var a=0.7854+1.5708*k, dx=Math.cos(a), dy=Math.sin(a);
+        seg(cubeX+dx*U*0.86, cy+dy*U*0.86, cubeX+dx*U*1.16, cy+dy*U*1.16,
+            Math.max(1.6,U*0.058), "rgba(255,255,255,.42)");
+      }
+      ring(cubeX, cy, U*(0.86 + 4.0*ease), lw2, cue);
+      if(armed) ring(cubeX, cy, U*0.86, lw2, GREEN);
+    } else if(style==="converge"){
+      seg(cubeX,topY,cubeX,botY, armed?lw2:Math.max(1.6,U*0.056), reticle);
+      var dx2 = U*4.3*ease;
+      [-1,1].forEach(function(sg){
+        var X = cubeX + sg*dx2, tip = sg>0 ? -U*0.42 : U*0.42;
+        seg(X,topY,X,botY,lw2,cue);
+        seg(X, cy+U*0.42, X+tip, cy, lw2, cue);
+        seg(X, cy-U*0.42, X+tip, cy, lw2, cue);
+      });
+    } else if(style==="pulse"){
+      var gl = 1-ease;
+      c.globalAlpha = 0.08+0.26*gl; c.strokeStyle = cue;
+      c.lineWidth = U*(0.18+0.7*gl); c.lineCap="butt";
+      c.beginPath(); c.moveTo(cubeX,topY); c.lineTo(cubeX,botY); c.stroke();
+      c.globalAlpha = 1;
+      seg(cubeX,topY,cubeX,botY, Math.max(2.2,U*(0.085+0.13*gl)), armed?GREEN:IDLE);
+    } else if(style==="highway"){
+      var laneW = U*2.7, laneX = W - laneW - U*1.4;
+      var laneTop = U*0.45, strikeY = botY - U*0.55, run = strikeY - laneTop;
+      var wall = Math.max(1.3, U*0.042);
+      c.globalAlpha = 0.42;
+      seg(laneX, laneTop, laneX, strikeY, wall, "#CFE6FF");
+      seg(laneX+laneW, laneTop, laneX+laneW, strikeY, wall, "#CFE6FF");
+      c.globalAlpha = 1;
+      /* Notes FALL onto the strike bar. `frac` counts down to 0 at the press, so
+         distance travelled down the lane is (1 - frac): at frac 1 the note is at
+         the top, at frac 0 it is sitting on the bar. Using frac directly ran the
+         whole lane backwards. */
+      var nh = Math.max(3, U*0.17), inset = U*0.16;
+      for(var k2=1;k2<=2;k2++){
+        var fk = frac + k2*0.42;          /* later presses are further from the bar */
+        if(fk >= 1) continue;             /* still above the lane, not visible yet */
+        c.globalAlpha = 0.16 + 0.1*(2-k2);
+        c.fillStyle = "#CFE6FF";
+        c.fillRect(laneX+inset, laneTop + run*(1-fk) - nh/2, laneW-inset*2, nh);
+      }
+      c.globalAlpha = 1;
+      seg(laneX-U*0.22, strikeY, laneX+laneW+U*0.22, strikeY,
+          Math.max(2, U*0.08), armed?GREEN:"#EDF6FF");
+      c.save();
+      c.shadowColor = armed?GREEN:"#CFE6FF"; c.shadowBlur = U*0.5;
+      c.fillStyle   = armed?GREEN:"#CFE6FF";
+      var ny = laneTop + run*(1-frac);
+      c.fillRect(laneX+inset, ny-nh/2, laneW-inset*2, nh);
+      c.fillRect(laneX+inset, ny-nh/2, laneW-inset*2, nh);
+      c.restore();
+      c.globalAlpha = 0.22;
+      seg(cubeX,topY,cubeX,botY, Math.max(1.2,U*0.038), armed?GREEN:"#CFE6FF");
+      c.globalAlpha = 1;
+    } else {
+      /* CLASSIC. The marker is a thing standing in the level, not an animation:
+         it has to travel at exactly the speed the ground scrolls, or it visibly
+         outruns the spike it is there to mark. So it is positioned the same way
+         the spike is - off SPEED and the clock - and it reaches the player at
+         precisely cyc == TP. Markers are drawn for the neighbouring cycles too,
+         so one is always approaching instead of popping into existence.
+         The band's WIDTH is the timing window converted to level distance:
+         SPEED * (ARM_HI - ARM_LO). Its edges are literally how much ground you
+         have to press in. */
+      seg(cubeX,topY,cubeX,botY, armed?lw2:Math.max(1.6,U*0.056), reticle);
+      for(var m=-1;m<=1;m++){
+        var lx = cubeX + SPEED*(TP + m*CYCLE - cyc);
+        if(lx < -U*4 || lx > W+U*4) continue;
+        var live = (m === 0), hot = live && armed;
+        var bandL = lx - SPEED*ARM_HI, bandW = SPEED*(ARM_HI - ARM_LO);
+        c.globalAlpha = hot ? 0.5 : 0.17;
+        c.fillStyle = hot ? GREEN : "#CFE6FF";
+        c.fillRect(bandL, topY, Math.max(2, bandW), botY-topY);
+        c.globalAlpha = 1;
+        seg(lx,topY,lx,botY, lw2, "#EDF6FF");
+        c.fillStyle="rgba(0,0,0,.6)"; c.beginPath(); c.arc(lx,cy,U*0.3,0,6.2832); c.fill();
+        c.fillStyle="#EDF6FF";        c.beginPath(); c.arc(lx,cy,U*0.24,0,6.2832); c.fill();
+        c.fillStyle=hot?GREEN:"#8FA8C8"; c.beginPath(); c.arc(lx,cy,U*0.11,0,6.2832); c.fill();
+      }
+    }
+    c.restore();
+
+    if(hit>0 && hit<1){
+      c.globalAlpha = 0.55*(1-hit); c.fillStyle="#fff";
+      c.beginPath(); c.arc(cubeX, cy, U*(0.35+1.7*hit), 0, 6.2832); c.fill();
+      c.globalAlpha = 1;
+    }
+    return { armed: armed, cyc: cyc };
+  }
+
+  /* -------------------------------------------------------------------------
+     Mobile aspect ratio. The renderer locks its ratio from the element's own
+     width/height attributes on first paint, so a 2.95:1 canvas on a phone would
+     be a 132px letterbox with the cue too small to read. Reshape BEFORE the
+     first frame, then the unit derivation (U = H/9.5) does the rest.
+     ------------------------------------------------------------------------- */
+  var view = document.getElementById("view");
+  if(innerWidth < 720){ view.setAttribute("width","900"); view.setAttribute("height","520"); }
+
+  /* -------------------------------------------------------------------------
+     THE WINDOW BAR. Cells are one frame at 60fps, built to fill the measured
+     width, centred on the press frame. The lit run is the frames where a press
+     actually registers, derived from the SAME constants the canvas uses.
+     ------------------------------------------------------------------------- */
+  var cellsEl = document.getElementById("cells");
+  var playhead = document.getElementById("playhead");
+  var chipsEl = document.getElementById("chips");
+  var FRAME_PX = 24;
+  var half = 0, litLo = 0, litHi = 0;
+
+  function buildBar(){
+    var avail = cellsEl.parentElement.clientWidth - 40;
+    /* The cell pitch never changes - a ruler that rescales its unit is not a
+       ruler - so a narrow screen gets FEWER frames, not smaller ones. The floor
+       is 11 (five frames either side of the press), which still contains the
+       whole lit window and fits a 390px phone without sideways scrolling. */
+    var n = Math.max(11, Math.floor(avail / FRAME_PX));
+    if(n % 2 === 0) n--;                     /* odd, so one cell is dead centre */
+    half = (n - 1) / 2;
+    litLo = Math.round(ARM_LO * FPS);        /* -2 */
+    litHi = Math.round(ARM_HI * FPS);        /* +3 */
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<n;i++){
+      var f = i - half;
+      var cell = document.createElement("i");
+      if(f >= litLo && f <= litHi) cell.className = "lit";
+      if(f % 5 === 0){
+        cell.setAttribute("data-f","");
+        var lab = document.createElement("b");
+        lab.textContent = f > 0 ? "+"+f : String(f);
+        cell.appendChild(lab);
+      }
+      frag.appendChild(cell);
+    }
+    Array.prototype.slice.call(cellsEl.querySelectorAll("i")).forEach(function(n2){ n2.remove(); });
+    cellsEl.insertBefore(frag, playhead);
+  }
+  buildBar();
+
+  function barX(cyc){
+    /* frames away from the press moment, clamped to the bar's own span */
+    var f = (cyc - TP) * FPS;
+    var clamped = Math.max(-half - 0.5, Math.min(half + 0.5, f));
+    return (half + clamped) * FRAME_PX;
+  }
+
+  function grade(cyc){
+    /* Measure to the NEAREST press moment, not this cycle's. Someone pressing
+       just after the loop wraps is early for the next one, not 90 frames late. */
+    var d = cyc - TP;
+    if(d >  CYCLE/2) d -= CYCLE;
+    if(d < -CYCLE/2) d += CYCLE;
+    var offset = Math.round(d * FPS);
+    var registers = d >= ARM_LO && d <= ARM_HI;
+
+    /* Always a number. The whole point of the mod is that it never tells you
+       "good" or "early" - it tells you how many frames you were out - so a miss
+       here has to report the same way, or the demo argues against the product. */
+    var chip = document.createElement("span");
+    if(Math.abs(offset) <= 1){
+      chip.className = "chip perfect";
+      chip.textContent = "perfect";
+    } else {
+      chip.className = registers ? "chip" : "chip miss";
+      chip.textContent = Math.abs(offset) + "f " + (offset < 0 ? "early" : "late");
+    }
+    chipsEl.appendChild(chip);
+    /* Five chips wrap onto a second row on a phone and shove the keycaps down the
+       page mid-interaction. Keep three there so the row height never changes. */
+    var maxChips = innerWidth < 640 ? 3 : 5;
+    while(chipsEl.children.length > maxChips) chipsEl.removeChild(chipsEl.firstChild);
+  }
+
+  var lastCyc = TP + 0.02;
+  var machine = document.getElementById("machine");
+  addEventListener("keydown", function(e){
+    if(e.code === "Space" || e.code === "KeyW" || e.code === "ArrowUp"){
+      if(/^(INPUT|TEXTAREA|BUTTON|A)$/.test((e.target.tagName||"").toUpperCase())) return;
+      e.preventDefault();
+      grade(lastCyc);
+    }
+  });
+  machine.addEventListener("pointerdown", function(e){
+    if(e.target.closest("button,a")) return;
+    grade(lastCyc);
+  });
+
+  /* -------------------------------------------------------------------------
+     One loop, one canvas, and it stops entirely when the machine scrolls away.
+     A stuttering demo of a frame-timing tool would undo the whole argument.
+     ------------------------------------------------------------------------- */
+  var current = "ring", running = true, rafId = 0;
+
+  Array.prototype.slice.call(document.querySelectorAll(".cap")).forEach(function(btn){
+    btn.addEventListener("click", function(){
+      current = btn.dataset.style;
+      document.querySelectorAll(".cap").forEach(function(x){
+        x.setAttribute("aria-selected", x === btn ? "true" : "false");
+      });
+      if(reduce) frame(performance.now());
+    });
+  });
+
+  function frame(ms){
+    var t = ms/1000;
+    var st = scene(view, current, t);
+    lastCyc = st.cyc;
+    playhead.style.transform = "translate3d(" + barX(st.cyc) + "px,0,0)";
+    if(!reduce && running) rafId = requestAnimationFrame(frame);
+  }
+  rafId = requestAnimationFrame(frame);
+
+  if("IntersectionObserver" in window && !reduce){
+    new IntersectionObserver(function(entries){
+      var vis = entries[0].isIntersecting;
+      if(vis && !running){ running = true; rafId = requestAnimationFrame(frame); }
+      else if(!vis && running){ running = false; cancelAnimationFrame(rafId); }
+    }, { threshold: 0 }).observe(machine);
+  }
+
+  var rz;
+  addEventListener("resize", function(){
+    clearTimeout(rz);
+    rz = setTimeout(function(){ buildBar(); if(reduce) frame(performance.now()); }, 150);
+  });
+})();
+</script>
+
+<script>
+/* Marketing page only. Signing in, buying, the download and support all live on
+   /account.html, so there is one implementation of each rather than two that drift.
+   This reads /api/me and /api/release so the buy control tells the truth. */
+(function(){
+  var ME = null, LAUNCHED = false;
+  var DISCORD = "https://discord.gg/FncjJJNcES";
+  var $ = function(id){ return document.getElementById(id); };
+
+  async function api(path){
+    var r = await fetch(path, { credentials: "same-origin" });
+    return { status: r.status, data: await r.json().catch(function(){ return {}; }) };
+  }
+
+  function paint(){
+    var pill = $("pill"), note = $("buynote");
+    if(!pill) return;
+    var owned = !!(ME && ME.paid);
+    pill.className = "pill";
+    if(owned){
+      pill.classList.add("owned");
+      pill.textContent = "You own this — download .geode";
+      pill.href = "/account.html"; pill.removeAttribute("target"); pill.removeAttribute("rel");
+      note.textContent = "Signed in. The newest build is in your account.";
+    } else if(!LAUNCHED){
+      pill.classList.add("soon");
+      pill.textContent = "Launching soon";
+      pill.href = DISCORD; pill.target = "_blank"; pill.rel = "noopener";
+      note.textContent = "Checkout isn't open here yet. Join the Discord and you'll see it go live.";
+    } else {
+      pill.textContent = "Get Click Indicators — $2.99";
+      pill.href = "/account.html"; pill.removeAttribute("target"); pill.removeAttribute("rel");
+      note.textContent = "One payment. No subscription, no launcher, no expiring key.";
+    }
+  }
+
+  /* The clip is the strongest proof on the page, but it only exists once it has
+     been recorded. Show the section when the file loads, leave it out when it
+     doesn't, so the page never renders a broken box. */
+  var v = $("demoVideo");
+  if(v){
+    v.addEventListener("loadeddata", function(){ $("clip").hidden = false; v.play().catch(function(){}); });
+    v.addEventListener("error", function(){ $("clip").hidden = true; });
+  }
+
+  var copy = $("copyPath");
+  if(copy) copy.addEventListener("click", function(){
+    navigator.clipboard.writeText($("pathText").textContent).then(function(){
+      copy.textContent = "Copied"; setTimeout(function(){ copy.textContent = "Copy"; }, 1400);
+    }, function(){ copy.textContent = "Copy failed"; });
+  });
+
+  async function load(){
+    var r = await api("/api/me");
+    ME = (r.status === 200 && r.data.ok) ? r.data : null;
+    paint();
+  }
+  async function loadRelease(){
+    var r = await api("/api/release");
+    if(r.data && r.data.ok){
+      LAUNCHED = !!r.data.live;
+      var ver = r.data.latest && r.data.latest.version;
+      if(ver) $("verline").textContent = "   Build " + ver;
+      paint();
+    }
+  }
+
+  /* Checkout returns to the dashboard now. Anyone arriving with the old
+     parameters (a bookmarked success URL) still lands where they meant to. */
+  var q = new URLSearchParams(location.search);
+  if(q.get("paid") || q.get("cancelled")){
+    location.replace("/account.html" + location.search);
+    return;
+  }
+
+  loadRelease();
+  load();
+})();
+</script>
+</body>
+</html>

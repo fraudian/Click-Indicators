@@ -1,0 +1,57 @@
+# clickindicators.com
+#
+# AI READERS are allowed. These fetch a page to answer a question a person is
+# asking right now, and they cite the source - that is how someone finds this mod
+# when they ask an assistant "what shows you when to click in Geometry Dash".
+# AI TRAINERS are not. Different thing, different answer.
+
+Sitemap: https://clickindicators.com/sitemap.xml
+
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
+
+# --- assistants that fetch on a user's behalf and attribute: allowed ---
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# --- training crawlers: not allowed ---
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+# --- nothing useful behind the account wall ---
+User-agent: *
+Disallow: /api/

@@ -1,0 +1,14 @@
+-- The macro vault key, one per account.
+--
+-- Macro files used to land on disk in plain bytes, so a cracked binary plus a copied macros/ folder
+-- was the whole product - and the library IS the product: 1,510 files, worth far more than the DLL.
+-- Sealed with a key only an account can obtain, a leaked pack is noise.
+--
+-- Per ACCOUNT rather than per device, deliberately. The device token is regenerated on every
+-- sign-in, and signing in on another PC and back is routine now that it is one device at a time -
+-- keying the cache on the token would wipe a customer's downloaded macros every time they did it.
+--
+-- NULL until the account first asks; generated lazily so nothing has to be backfilled.
+--
+--   wrangler d1 execute clickindicators --remote --file server/migrate-vault.sql
+ALTER TABLE users ADD COLUMN vault_key TEXT;

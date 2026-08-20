@@ -1,0 +1,34 @@
+{
+  // The static site, deployed as a Worker with assets (which is what Cloudflare's
+  // drag-and-drop created - hence it never appeared under Pages).
+  //   deploy with:  wrangler deploy -c wrangler.site.jsonc
+  // Kept OUTSIDE website/ so the config itself is not served to the public.
+  "name": "autumn-paper-2321",
+  "compatibility_date": "2026-07-01",
+
+  // not_found_handling serves website/404.html with a real 404 status on any path that
+  // does not match an asset. Without it an unknown path returned a 0-byte body, which
+  // reads as a dead site to anyone who mistypes a link.
+  "assets": {
+    "directory": "./website",
+    "not_found_handling": "404-page"
+  },
+
+  // A plain zone route, NOT a custom domain. The custom domain was removed during the August
+  // 2026 outage: it carries its own dedicated certificate, separate from Universal SSL, and
+  // redeploying this file with custom_domain:true would recreate it and undo that. A route
+  // uses the zone's Universal certificate instead.
+  "routes": [
+    { "pattern": "clickindicatorsmod.com/*", "zone_name": "clickindicatorsmod.com" },
+    { "pattern": "clickindicators.com/*",     "zone_name": "clickindicators.com" },
+    { "pattern": "www.clickindicators.com/*", "zone_name": "clickindicators.com" }
+  ],
+
+  // Keep the workers.dev name alive - it is the door the failover proxy comes in through while
+  // the zone's edge is broken, and wrangler turns it off on every deploy unless this says
+  // otherwise.
+  "workers_dev": true,
+
+  // Same reason as the API worker: no per-deployment public copies of the site.
+  "preview_urls": false
+}

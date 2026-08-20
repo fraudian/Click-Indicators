@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found — Click Indicators</title>
+<meta name="description" content="That page doesn't exist on clickindicators.com.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.png" type="image/png">
+<meta name="theme-color" content="#070B1A">
+<style>
+@font-face{
+  font-family:"Anybody";
+  src:url("/anybody.woff2") format("woff2-variations");
+  font-weight:100 900; font-stretch:50% 150%; font-display:swap;
+}
+@font-face{
+  font-family:"Archivo";
+  src:url("/archivo.woff2") format("woff2-variations");
+  font-weight:400 900; font-stretch:62% 125%; font-display:swap;
+}
+:root{
+  --ground:#070B1A; --chassis:#101833; --seam:#5670AB; --signal:#F2A81C;
+  --signal-under:#7A4A05; --legend:#EAF0FF; --legend-2:#98A6C8; --ink:#0A0A0A;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--ground); color:var(--legend);
+  font-family:"Archivo",system-ui,sans-serif; font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh; display:flex; flex-direction:column}
+.wrap{max-width:1200px; margin:0 auto; padding:0 clamp(20px,4vw,40px); width:100%}
+.rail{border-bottom:1px solid #172244}
+.rail .in{display:flex; align-items:center; height:56px}
+.mark{display:inline-flex; align-items:center; gap:11px; text-decoration:none;
+  color:var(--legend); font-family:"Anybody",sans-serif; font-weight:800;
+  font-stretch:118%; font-size:20px; letter-spacing:.005em}
+.mark img{width:28px; height:28px; display:block; flex:none}
+main{flex:1; display:flex; align-items:center; padding:clamp(48px,10vw,120px) 0}
+h1{font-family:"Anybody",sans-serif; font-weight:800; font-stretch:125%;
+  font-size:clamp(34px,5vw,60px); line-height:.94; letter-spacing:-.02em;
+  margin:0 0 20px; max-width:16ch}
+p{font-size:19px; color:var(--legend-2); max-width:54ch; margin:0 0 28px}
+.acts{display:flex; gap:12px; flex-wrap:wrap}
+.pill{display:inline-block; text-decoration:none; border-radius:999px; padding:13px 22px;
+  font-size:15px; font-weight:700; border:2px solid var(--signal); background:var(--signal);
+  color:var(--ink); box-shadow:0 4px 0 var(--signal-under);
+  transition:transform .06s linear, box-shadow .06s linear}
+.pill:active{transform:translateY(4px); box-shadow:0 0 0 var(--signal-under)}
+.ghost{display:inline-block; text-decoration:none; padding:13px 22px; font-size:15px;
+  font-weight:700; border:2px solid var(--seam); color:var(--legend); background:transparent;
+  transition:border-color .12s linear}
+.ghost:hover{border-color:var(--legend)}
+:focus-visible{outline:3px solid var(--signal); outline-offset:3px}
+@media (prefers-reduced-motion:reduce){ .pill{transition:none} }
+footer{background:var(--chassis); border-top:1px solid var(--seam); padding:24px 0 32px;
+  font-size:14px; color:var(--legend-2)}
+footer nav{display:flex; gap:16px; flex-wrap:wrap}
+footer a{color:var(--legend-2); text-decoration:none}
+footer a:hover{color:var(--legend)}
+</style>
+</head>
+<body>
+<div class="rail">
+  <div class="wrap in"><a class="mark" href="/"><img src="/mark.png" alt="" width="28" height="28">click indicators</a></div>
+</div>
+
+<main>
+  <div class="wrap">
+    <h1>That page isn't here.</h1>
+    <p>Either the link is wrong or it moved. If you were going to your download, it's in your
+      account. If a link on this site sent you here, tell me in the Discord and I'll fix it.</p>
+    <div class="acts">
+      <a class="pill" href="/">Back to the start</a>
+      <a class="ghost" href="/account.html">Your account</a>
+      <a class="ghost" href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener">Discord</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav>
+      <a href="/">Home</a>
+      <a href="/account.html">Account</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

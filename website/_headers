@@ -1,0 +1,24 @@
+# payment is allowed to this origin and PayPal only. It used to be blanket-denied, which is the
+# wrong default for the one page on the site whose whole purpose is taking a payment. The standard
+# PayPal button uses a popup and does not need it, but Venmo and the card fields do, and a
+# checkout that silently half-works is worse than one that never appears.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(self "https://www.paypal.com")
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+
+# The dashboard shows a licence and a paid download. Nothing here should be cached by a
+# shared proxy, and it should not be indexed.
+#
+# Matched on /account, not /account.html: Workers Assets canonicalises the extension away and
+# redirects, so a rule written against the .html only ever decorated the redirect and never
+# the page anyone actually loads. Both are listed so it holds either way.
+/account
+  Cache-Control: no-store
+  X-Robots-Tag: noindex
+
+/account.html
+  Cache-Control: no-store
+  X-Robots-Tag: noindex

@@ -1,0 +1,70 @@
+{
+  "name": "clickindicators-api",
+  "main": "worker.js",
+  "compatibility_date": "2026-07-01",
+
+  // Routed under the site's own domain so the session cookie is first-party.
+  // Both domains, because the original one is unreachable from some consumer networks that
+  // reset any connection naming it. clickindicators.com is the newer, shorter name and is
+  // intended to become the one customers are given; clickindicatorsmod.com keeps working for
+  // everyone already using it, and for the ~1,300 installs that have it compiled in.
+  "routes": [
+    { "pattern": "clickindicatorsmod.com/api/*", "zone_name": "clickindicatorsmod.com" },
+    { "pattern": "clickindicators.com/api/*",    "zone_name": "clickindicators.com" },
+    { "pattern": "www.clickindicators.com/api/*", "zone_name": "clickindicators.com" }
+  ],
+
+  // The workers.dev name is the way in when the zone itself cannot be reached. It is what the
+  // failover proxy forwards to, and during the August 2026 outage it was the only thing still
+  // answering. Wrangler DISABLES workers.dev on every deploy unless this is set, so leaving it
+  // out silently removes the fallback the moment anyone ships a change - which is exactly what
+  // happened the first time this Worker was deployed during the outage.
+  "workers_dev": true,
+
+  // Every deployment otherwise gets its own public <version>-clickindicators-api.workers.dev
+  // address. That is a growing list of permanently reachable copies of the API - including old
+  // ones carrying bugs that have since been fixed - none of which are named anywhere and none of
+  // which anyone is watching. The one workers.dev name above is a deliberate way in; these are
+  // not.
+  "preview_urls": false,
+
+  // The paid .geode is bundled into the Worker so /api/download can check the
+  // session before handing it over. A static asset cannot be gated.
+  "rules": [
+    { "type": "Data", "globs": ["**/*.geode"], "fallthrough": false }
+  ],
+
+  // Not a secret: Stripe price ids are public and appear in client-side code.
+  // Only sk_... and whsec_... go through `wrangler secret put`.
+  "vars": {
+    "STRIPE_PRICE_ID": "price_1TyEehAoPmpB4lgYpqGdrxaJ",
+
+    // Discord role for buyers. None of these are secret - the client id is public by design
+    // and the ids are visible to anyone in the server. DISCORD_CLIENT_SECRET and
+    // DISCORD_BOT_TOKEN go through `wrangler secret put`.
+    // Linking stays switched off until all five are present, so a half-configured setup
+    // shows no button rather than a button that fails.
+    "DISCORD_GUILD_ID": "1531038516484772012",
+    "DISCORD_CLIENT_ID": "1500621377286312067",
+    "DISCORD_ROLE_ID": "1531039693704269825"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "clickindicators",
+      "database_id": "af4e8afe-1f54-42ff-912f-4c9c1d78e16c"
+    }
+  ],
+
+  // Mirrored macros from t.me/gdmacros. Telegram serves no file bytes over HTTP, so this source
+  // cannot be proxied the way hyperbolus is - the bytes have to live somewhere we control.
+  // Objects are content-addressed (tg/<sha256>.<ext>) and the bucket has no public r2.dev domain:
+  // every read goes through /api/macro behind paidDevice(), and the sha256 is never in a response.
+  "r2_buckets": [
+    { "binding": "MACROS", "bucket_name": "clickindicators-macros" }
+  ],
+
+  // so `wrangler tail` and the dashboard show real errors
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}

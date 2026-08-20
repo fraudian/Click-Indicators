@@ -1,0 +1,20 @@
+; DNS backup for clickindicatorsmod.com
+; Captured 2026-08-13 from the Cloudflare dashboard before the zone delete/re-add.
+; BIND format - importable via Cloudflare DNS > Import.
+; TTL 1 == "Auto" in the Cloudflare UI.
+;
+; PROXY STATUS IS NOT CARRIED BY BIND IMPORT. After importing, set:
+;   clickindicatorsmod.com  A  192.0.2.1  -> PROXIED (orange cloud)
+;   everything else                        -> DNS ONLY (grey cloud)
+;
+; Workers Routes to recreate after the zone is re-added:
+;   clickindicatorsmod.com/*      -> autumn-paper-2321
+;   clickindicatorsmod.com/api/*  -> clickindicators-api
+
+clickindicatorsmod.com.	1	IN	A	192.0.2.1
+clickindicatorsmod.com.	1	IN	MX	10 mx2.privateemail.com.
+clickindicatorsmod.com.	1	IN	MX	10 mx1.privateemail.com.
+send.send.clickindicatorsmod.com.	3600	IN	MX	10 feedback-smtp.us-east-1.amazonses.com.
+clickindicatorsmod.com.	1	IN	TXT	"v=spf1 include:spf.privateemail.com ~all"
+resend._domainkey.send.clickindicatorsmod.com.	3600	IN	TXT	"p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDWd3eHdhezRwNGUDd3pWpixN8z+Fq84DF2yW7A2mT9JXqE8AKUfJooTGUOIv9/ZIxutT1Xctq8mYyE9Y7/FGkFW5ALiMSUM8lkTegRTAAstgZcDJaTM6KP80JqMLRIFH1NifvxQV/bLSWPb8SFitIbeoa5BvX8mOV9gre6X/RBkwIDAQAB"
+send.send.clickindicatorsmod.com.	3600	IN	TXT	"v=spf1 include:amazonses.com ~all"

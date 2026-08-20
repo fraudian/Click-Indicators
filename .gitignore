@@ -1,0 +1,75 @@
+# build output - CI produces the real artifact
+build/
+build-*/
+out/
+*.geode
+*.pdb
+*.ilk
+
+# local tooling
+.vscode/
+.idea/
+.cache/
+CMakeUserPresets.json
+
+# the site and backend live here but are not part of the mod source an index
+# admin needs to verify; keep them out of the review repo
+website/downloads/
+test_macros/
+
+# wrangler local state - holds your Cloudflare account id
+.wrangler/
+
+# superseded Endless Wave code, kept locally only
+_archive/
+
+# embedded git checkout, not ours to vendor
+tools/jfp-src/
+
+# local dev scripts - not needed to build, and they hardcode local paths
+tools/
+
+# logo working files - design scratch, and the Canva export carries my name
+logo/
+
+# local backups
+.bak-*/
+
+# scratch from debugging the import-table crash
+iat.json
+
+# wrangler local secrets - real sk_/whsec_ values would land here
+.dev.vars
+.dev.vars.*
+
+# Third-party mod sources and Broma bindings pulled in only for the compatibility audit.
+# Other people's code, various licences - never ours to redistribute.
+_audit/
+_cbf_*
+_gd_*.bro
+_bin_parsers.inc
+
+# The security review lists weaknesses that are still open. Kept out of git so that making
+# this repo public - to show the compatibility work, say - cannot publish it by accident.
+docs/security-review-*.md
+
+# Telegram mirror working files. ci_ingest.session is a LIVE LOGIN for the ingest account -
+# committing it hands anyone that Telegram account, so it is ignored here rather than trusted to
+# be remembered. blobs/ and work.db are regenerable (index_pass + mirror_telegram rebuild them)
+# and blobs/ alone is ~49 MB, which has no business in a source repo.
+ingest/ci_ingest.session
+ingest/*.session
+ingest/*.session-journal
+ingest/blobs/
+ingest/work.db
+ingest/slcv1_samples/
+ingest/tg-index.sql
+ingest/__pycache__/
+ingest/.wrangler/
+ingest/spot.txt
+
+# stray artifact from a shell redirect on Windows
+nul
+
+# licence signing key - private, never committed
+server/.lic-signing-key

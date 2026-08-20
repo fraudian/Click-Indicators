@@ -1,0 +1,384 @@
+{
+    "geode": "5.7.1",
+    "gd": {
+        "win": "2.2081",
+        "mac": "2.2081",
+        "android": "2.2081",
+        "ios": "2.2081"
+    },
+    "id": "jackz.click-indicators",
+    "name": "Click Indicators",
+    "version": "v1.0.26",
+    "developer": "jackz",
+    "description": "Shows you the exact frame to click, using macros from players who already beat the level.",
+    "tags": [
+        "gameplay",
+        "utility",
+        "online",
+        "cheat",
+        "paid"
+    ],
+    "links": {
+        "homepage": "https://clickindicators.com",
+        "community": "https://discord.gg/FncjJJNcES"
+    },
+    "resources": {
+        "files": [
+            "resources/press.wav",
+            "resources/release.wav",
+            "resources/press_beep.wav",
+            "resources/release_beep.wav",
+            "resources/press_wood.wav",
+            "resources/release_wood.wav",
+            "resources/press_snap.wav",
+            "resources/release_snap.wav"
+        ]
+    },
+    "settings": {
+        "enabled": {
+            "name": "Show guide",
+            "description": "Master toggle for the whole overlay.",
+            "type": "bool",
+            "default": true
+        },
+        "safe-mode": {
+            "name": "Safe mode",
+            "description": "Nothing you do counts while the guide is actually running: no best percentage, no completion, no stars, orbs, diamonds or coins, no attempt counter, and nothing sent to the leaderboard. On a level with no macro downloaded there is no guide, so this does nothing and your runs count as normal. Turning it off mid-attempt does not restore that attempt - restart the level for a run that counts.",
+            "type": "bool",
+            "default": true
+        },
+        "free-camera": {
+            "name": "Free camera when paused",
+            "description": "Desktop only, it needs a keyboard. Pause the game and pan around the level with the arrow keys or WASD to scout what is coming. The camera snaps back to where it was the moment you resume, so it cannot affect the run.",
+            "type": "bool",
+            "default": false
+        },
+        "auto-fetch": {
+            "name": "Auto-fetch macros online",
+            "description": "When you enter a level with no downloaded macros, download some from hyperbolus.net automatically. Otherwise use the download button on the level screen.",
+            "type": "bool",
+            "default": false
+        },
+        "record-button": {
+            "name": "Record button in pause menu",
+            "description": "Adds a Record / Stop button to the pause screen so you can capture your own run and save it as a guide. Frames are speed-independent, so you can slow the game right down, play through, and the saved macro still lines up at full speed.",
+            "type": "bool",
+            "default": true
+        },
+        "ticks": {
+            "name": "Press sound",
+            "description": "Play a sharp click at each press (pitch rises for tighter windows).",
+            "type": "bool",
+            "default": true
+        },
+        "release-sound": {
+            "name": "Release sound",
+            "description": "Play a distinct softer down-tone when a hold should be released.",
+            "type": "bool",
+            "default": true
+        },
+        "tight-pitch": {
+            "name": "Pitch by window tightness",
+            "description": "Raise the press pitch on frame-perfect clicks so you can hear how precise to be.",
+            "type": "bool",
+            "default": true
+        },
+        "volume": {
+            "name": "Sound volume",
+            "type": "float",
+            "default": 2.0,
+            "min": 0.0,
+            "max": 5.0
+        },
+        "sound-pack": {
+            "name": "Cue sounds",
+            "description": "Click = the original sharp chirp. Beep = clean studio blip. Wood = dry woodblock, easiest to keep a rhythm to. Snap = unpitched noise, never clashes with the song.",
+            "type": "string",
+            "default": "click",
+            "one-of": [
+                "click",
+                "beep",
+                "wood",
+                "snap"
+            ]
+        },
+        "indicator-mode": {
+            "name": "Indicator style",
+            "description": "Ring = a ring collapses onto your icon, the most precise and the best default. Classic = the scrolling line and window, the only style that shows you how wide the timing window is. Converge = two lines slide in and meet on you, without covering your icon. Pulse = just the reticle brightening, for when you want almost nothing on screen. Highway = a Guitar Hero style lane in the corner: notes fall toward a bar and you press as each one lands, with holds drawn as long notes. It is the only style that shows several upcoming clicks and their rhythm at once. All of them turn bright green the instant you are on target.",
+            "type": "string",
+            "default": "ring",
+            "one-of": [
+                "ring",
+                "classic",
+                "converge",
+                "pulse",
+                "highway"
+            ]
+        },
+        "hw-x": {
+            "name": "Highway: across",
+            "description": "Where the lane sits from left to right, as a fraction of the screen. 0 = hard left, 1 = hard right. Only used by the Highway style.",
+            "type": "float",
+            "default": 0.127,
+            "min": 0.02,
+            "max": 0.98,
+            "enable-if": "saved:hw-mode",
+            "enable-if-description": "Set <cy>Indicator style</c> to <cj>Highway</c> to use this."
+        },
+        "hw-y": {
+            "name": "Highway: height",
+            "description": "Where the bottom of the lane sits, as a fraction of the screen height. Raise it if the lane runs off the top, lower it to keep it out of the way. Only used by the Highway style.",
+            "type": "float",
+            "default": 0.24,
+            "min": 0.0,
+            "max": 0.7,
+            "enable-if": "saved:hw-mode",
+            "enable-if-description": "Set <cy>Indicator style</c> to <cj>Highway</c> to use this."
+        },
+        "hw-scale": {
+            "name": "Highway: size",
+            "description": "Overall size of the lane. 1 = the standard size, 0.5 = half, 2 = double. Width and height scale together so the notes keep their shape. Only used by the Highway style.",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.4,
+            "max": 2.0,
+            "enable-if": "saved:hw-mode",
+            "enable-if-description": "Set <cy>Indicator style</c> to <cj>Highway</c> to use this."
+        },
+        "hw-opacity": {
+            "name": "Highway: opacity",
+            "description": "How solid the lane, its notes and its hit bar are. Separate from the main Indicator opacity, because the lane sits over the level's artwork in the corner while the guide lines sit on the gameplay itself. 1 = solid.",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.1,
+            "max": 1.0,
+            "enable-if": "saved:hw-mode",
+            "enable-if-description": "Set <cy>Indicator style</c> to <cj>Highway</c> to use this."
+        },
+        "hw-guides": {
+            "name": "Highway: lane lines",
+            "description": "The two rails down the sides of the lane and the faint half-second lines across it. Turn this off for just the notes and the hit bar on a bare lane. The notes, the arrows and the bar itself are never hidden.",
+            "type": "bool",
+            "default": true,
+            "enable-if": "saved:hw-mode",
+            "enable-if-description": "Set <cy>Indicator style</c> to <cj>Highway</c> to use this."
+        },
+        "ring": {
+            "name": "Show timing cue",
+            "description": "Draw the selected Indicator style marker for the next click. Off = just the reticle (plus the Classic guide lines).",
+            "type": "bool",
+            "default": true
+        },
+        "record-path": {
+            "name": "Learn the path as you play",
+            "type": "bool",
+            "default": true,
+            "description": "Builds the wave route out of your own runs. Every attempt adds whatever it reached, so the line fills in as you practise. Costs nothing while playing - it only writes down where your icon already went."
+        },
+        "auto-path": {
+            "name": "Work out the wave path automatically",
+            "type": "bool",
+            "default": false,
+            "description": "Experimental. Tries to work the route out by replaying the macro at speed the first time you open a level. It does not work yet - the icon dies almost immediately - so the route is learned from your own runs instead. Leave this off."
+        },
+        "playback-raw-frames": {
+            "name": "Playback: match frames exactly (like Eclipse)",
+            "type": "bool",
+            "default": true,
+            "description": "Counts real physics ticks and matches the macro's frames against them. In 2.2081 the game runs each tick as two or more substeps, so its own counter is not a frame number - this counts the ticks themselves. Turn off to fall back on timing derived from level time."
+        },
+        "showcase-play": {
+            "name": "Play the macro (showcase)",
+            "type": "bool",
+            "default": false,
+            "description": "Plays the loaded macro on your icon so a run can be recorded following the drawn path. Developer builds only - this does nothing in a normal build, and any run it plays is forced into test mode so it cannot be submitted."
+        },
+        "trajectory": {
+            "name": "Wave route",
+            "description": "Draws the macro's flight path onto the level through every wave section, all of it at once and standing still, so you can see the line you are meant to be on and how far off it you are. Solved from the level's own blocks, not from where you happen to be. Wave only - ship and UFO are not drawn, because a wrong arc there still looks plausible and a wrong path is worse than none.",
+            "type": "bool",
+            "default": false
+        },
+        "dump-geometry": {
+            "name": "Wave route: write a diagnostic dump",
+            "description": "Writes everything the mod collected for the level - blocks, slopes, hazards, sections, clicks and the drawn route - to a text file in the mod's config folder, so a wrong path can be investigated without guessing. Off unless you have been asked to turn it on.",
+            "type": "bool",
+            "default": false
+        },
+        "dual-mirror": {
+            "name": "Wave route: dual mirror",
+            "description": "On a dual, also draw the second icon's path - the first one mirrored about the height the two entered the dual at. Skipped automatically where the dual is not symmetric, because there the mirror is not where the second player goes.",
+            "type": "bool",
+            "default": true
+        },
+        "route-solid": {
+            "name": "Wave route: one solid line",
+            "description": "Draw the route as a single continuous line of one weight instead of a thick segment per hold and a thin one per release. Nothing is lost: on a wave, up is held and down is released, so the thickness was repeating what the shape already shows, and the dots still mark every input. Turn this off for the old look.",
+            "type": "bool",
+            "default": true
+        },
+        "hold-bar": {
+            "name": "Hold bar",
+            "description": "The bar drawn from a press to its release, showing how long to keep holding. Turn it off for taps only. Also hidden by \"Guide lines in Classic only\" outside the Classic style.",
+            "type": "bool",
+            "default": true
+        },
+        "notches": {
+            "name": "Countdown notches",
+            "description": "Pre-roll ticks 150/100/50 ms before the press (full-speed only).",
+            "type": "bool",
+            "default": true
+        },
+        "lines": {
+            "name": "Guide lines + blocks",
+            "type": "bool",
+            "default": true
+        },
+        "lines-classic-only": {
+            "name": "Guide lines in Classic only",
+            "description": "Hides the scrolling window bars, the target line and the hold bar in the Ring, Converge and Pulse styles, leaving just the cue itself. Classic is unaffected.",
+            "type": "bool",
+            "default": true
+        },
+        "hide-from": {
+            "name": "Hide guide from (%)",
+            "description": "Start of a stretch of the level where the guide is turned off, so you can practise that part unaided while the rest of the level still shows. Set this and \"Hide guide to\" to the same value to disable it. Ignored in platformer levels, where a percentage has no meaning.",
+            "type": "float",
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0
+        },
+        "hide-to": {
+            "name": "Hide guide to (%)",
+            "description": "End of the hidden stretch. To practise the opening of a level with no help, set \"from\" to 0 and this to 20. To blank out a section in the middle, set 20 and 50.",
+            "type": "float",
+            "default": 0.0,
+            "min": 0.0,
+            "max": 100.0
+        },
+        "lookahead": {
+            "name": "Lookahead (seconds)",
+            "type": "float",
+            "default": 1.8,
+            "min": 0.5,
+            "max": 4.0
+        },
+        "hold-threshold": {
+            "name": "Hold cutoff (seconds)",
+            "type": "float",
+            "default": 0.05,
+            "min": 0.01,
+            "max": 0.3
+        },
+        "line-color": {
+            "name": "Line color",
+            "type": "rgb",
+            "default": "#00ff00"
+        },
+        "indicator-opacity": {
+            "name": "Indicator opacity",
+            "description": "How solid the indicators drawn on the level are - the press line, the hold bar, the guide lines and the stats readout. The Highway lane has its own setting. 1 = solid, lower = fainter.",
+            "type": "float",
+            "default": 1.0,
+            "min": 0.1,
+            "max": 1.0
+        },
+        "smooth-lines": {
+            "name": "Smooth lines",
+            "description": "Antialiases everything the mod draws, so edges look clean instead of stair-stepped. Turn this off if the overlay looks wrong on your graphics card. Takes effect next time you enter a level. Off on iOS, where the effect needs an OpenGL feature the device does not have.",
+            "type": "bool",
+            "default": {
+                "win": true,
+                "mac": true,
+                "android": true,
+                "ios": false
+            }
+        },
+        "cue-contrast": {
+            "name": "Contrast",
+            "description": "Lays a dark halo under the cue and guide lines so they stay readable on bright, busy levels instead of blending into the level's own artwork. 0 = a thin outline only, 1 = heavy separation.",
+            "type": "float",
+            "default": 0.6,
+            "min": 0.0,
+            "max": 1.0
+        },
+        "gm-cube": {
+            "name": "Show guide in Cube",
+            "type": "bool",
+            "default": true
+        },
+        "gm-ship": {
+            "name": "Show guide in Ship",
+            "type": "bool",
+            "default": true
+        },
+        "gm-ball": {
+            "name": "Show guide in Ball",
+            "type": "bool",
+            "default": true
+        },
+        "gm-ufo": {
+            "name": "Show guide in UFO",
+            "type": "bool",
+            "default": true
+        },
+        "gm-wave": {
+            "name": "Show guide in Wave",
+            "type": "bool",
+            "default": true
+        },
+        "gm-robot": {
+            "name": "Show guide in Robot",
+            "type": "bool",
+            "default": true
+        },
+        "gm-spider": {
+            "name": "Show guide in Spider",
+            "type": "bool",
+            "default": true
+        },
+        "gm-swing": {
+            "name": "Show guide in Swing",
+            "type": "bool",
+            "default": true
+        },
+        "reduce-flashing": {
+            "name": "Reduce flashing",
+            "description": "Cap the brightness of the ignition / press flashes.",
+            "type": "bool",
+            "default": false
+        },
+        "feedback": {
+            "name": "Trainer feedback + HUD",
+            "description": "Show how many frames early/late each click was, plus an accuracy/streak/calibration HUD.",
+            "type": "bool",
+            "default": true
+        },
+        "release-grading": {
+            "name": "Grade releases too",
+            "description": "Also judge when you let go of a hold, not just when you press. In ship, UFO, wave, robot and swing the hold length IS the input, so a perfect press with a wrong release still kills you - this is what tells you that happened. Off by default: it is one more line on screen.",
+            "type": "bool",
+            "default": false
+        },
+        "stats-hud": {
+            "name": "Stats readout",
+            "description": "Show accuracy, streak and calibration figures in the corner of the screen. Off by default - it is mostly useful while tuning your timing.",
+            "type": "bool",
+            "default": false
+        },
+        "debug-logging": {
+            "name": "Debug logging",
+            "description": "Write detailed diagnostics for macro loading, recording and licensing to the Geode log. Turn this on before reporting a problem.",
+            "type": "bool",
+            "default": false
+        },
+        "lead": {
+            "name": "Cue lead (seconds)",
+            "description": "Shifts every cue this far earlier, to cover the gap between the game drawing a frame and your click reaching it. 0 puts the cue exactly on the macro's timing. Raise it a little if you keep pressing late.",
+            "type": "float",
+            "default": 0.0,
+            "min": 0.0,
+            "max": 0.5
+        }
+    }
+}

@@ -1,0 +1,24 @@
+Copyright (c) 2026 Click Indicators. All rights reserved.
+
+This software is licensed, not sold. Purchasing a licence grants one person a
+personal, non-exclusive, non-transferable right to install and use Click Indicators.
+
+You may not:
+  - redistribute, resell, sublicense or publish this software or any part of it
+  - share your account credentials, or use one licence across unrelated people
+  - reverse engineer, decompile or disassemble it, except where that right cannot
+    lawfully be excluded
+  - remove or alter this notice
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+THIRD-PARTY CODE
+
+This mod includes three headers from maxnut's GDReplayFormat (libGDR), used to read
+.gdr/.gdr2 macro files. They are not covered by the terms above and remain the work of
+their author. See external/gdr/README.md for provenance and current licence status.
+
+Geometry Dash is a trademark of RobTop Games AB. This mod is not affiliated with,
+endorsed by, or sponsored by RobTop Games.

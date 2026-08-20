@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your account — Click Indicators</title>
+<meta name="description" content="Sign in to download Click Indicators, manage your licence and device, and link your Discord.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.png" type="image/png">
+<meta name="theme-color" content="#070B1A">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<style>
+/* ===========================================================================
+   Same system as the front page: two self-hosted variable faces, the nine
+   colour tokens, 0 radius on panels, and one pill shape reserved for a primary
+   action. This page is the customer's side of the same machine, so it is built
+   out of the same material rather than looking like a different product.
+
+   GREEN RULE. On the front page green is quarantined inside the live demo. Here
+   there is no demo, so green is not an accent at all - it is only ever a STATE:
+   a licence you own, a message that succeeded. It is never a button, never a
+   border, never a heading. Actions are --signal amber. That keeps "green means
+   this is good" true on both pages without green becoming the brand colour,
+   which is the thing that made the old site read as generated.
+   =========================================================================== */
+@font-face{
+  font-family:"Anybody";
+  src:url("/anybody.woff2") format("woff2-variations");
+  font-weight:100 900; font-stretch:50% 150%; font-display:swap;
+}
+@font-face{
+  font-family:"Archivo";
+  src:url("/archivo.woff2") format("woff2-variations");
+  font-weight:400 900; font-stretch:62% 125%; font-display:swap;
+}
+
+:root{
+  --ground:#070B1A;
+  --chassis:#101833;
+  --seam:#5670AB;
+  --signal:#F2A81C;
+  --signal-under:#7A4A05;
+  --legend:#EAF0FF;
+  --legend-2:#98A6C8;
+  --ink:#0A0A0A;
+  --state-ok:#35E07F;         /* a STATE, never an accent. see the note above */
+  --state-bad:#FF7A7A;
+  --display:"Anybody","Archivo",system-ui,sans-serif;
+  --body:"Archivo",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--legend);
+  font-family:var(--body); font-size:16px; line-height:1.55; min-height:100vh;
+  -webkit-font-smoothing:antialiased; font-synthesis:none;
+}
+a{color:var(--legend); text-decoration:underline; text-underline-offset:3px;
+  text-decoration-color:var(--seam)}
+a:hover{text-decoration-color:var(--signal)}
+:focus-visible{outline:3px solid var(--signal); outline-offset:3px}
+::selection{background:var(--signal); color:var(--ink)}
+
+/* ---------- header: matches the front page exactly ---------- */
+header{border-bottom:1px solid #172244}
+.bar{max-width:920px; margin:0 auto; padding:12px 22px; display:flex;
+  align-items:center; justify-content:space-between; gap:16px; min-height:64px}
+.brand{display:inline-flex; align-items:center; gap:11px; text-decoration:none;
+  color:var(--legend); font-family:var(--display); font-weight:800; font-stretch:118%;
+  font-size:20px; letter-spacing:.005em; white-space:nowrap}
+.brand img{width:28px; height:28px; display:block; flex:none}
+.bar nav{display:flex; gap:8px; align-items:center}
+.wrap{max-width:920px; margin:0 auto; padding:36px 22px 90px}
+
+h1{font-family:var(--display); font-weight:800; font-stretch:118%; font-size:32px;
+  line-height:1.02; letter-spacing:-.02em; margin:0 0 6px}
+h2{font-family:var(--display); font-weight:800; font-stretch:112%; font-size:19px;
+  line-height:1.15; letter-spacing:-.01em; margin:0 0 4px}
+.sub{color:var(--legend-2); font-size:15px; margin:0 0 26px; max-width:70ch}
+.sub b{color:var(--legend); font-weight:500}
+
+/* ---------- cards are panels, not floating rounded boxes ---------- */
+.card{border:1px solid var(--seam); background:var(--chassis); border-radius:0;
+  padding:24px; margin-bottom:16px}
+.card.center{max-width:440px; margin:7vh auto 0}
+/* The eyebrow survives here because on a dashboard it is a real section label on
+   a distinct panel, not decoration repeated down a marketing page. Set in the
+   body face at normal case - no uppercase tracking. */
+.kicker{font-size:13px; font-weight:500; color:var(--legend-2); margin:0 0 10px}
+
+label{display:block; font-size:14px; font-weight:500; color:var(--legend-2);
+  margin:16px 0 6px}
+input{
+  width:100%; padding:12px 13px; border-radius:0; border:1px solid var(--seam);
+  background:var(--ground); color:var(--legend);
+  font-family:var(--body); font-size:15px;
+}
+input::placeholder{color:#6B7899}
+input:focus{outline:3px solid var(--signal); outline-offset:2px; border-color:var(--signal)}
+#code,#code2{letter-spacing:.42em; text-align:center; font-size:21px; font-weight:500;
+  font-variant-numeric:tabular-nums}
+
+/* ---------- buttons ---------- */
+button{
+  padding:12px 20px; border:2px solid var(--signal); border-radius:999px; cursor:pointer;
+  background:var(--signal); color:var(--ink);
+  font-family:var(--body); font-weight:700; font-size:15px;
+  box-shadow:0 4px 0 var(--signal-under);
+  transition:transform .06s linear, box-shadow .06s linear;
+}
+button:active{transform:translateY(4px); box-shadow:0 0 0 var(--signal-under)}
+button.wide{width:100%; margin-top:20px}
+button.ghost{background:transparent; color:var(--legend); border:2px solid var(--seam);
+  box-shadow:none; font-weight:700}
+button.ghost:hover{border-color:var(--legend)}
+button.ghost:active{transform:none}
+button.small{padding:7px 14px; font-size:13px; border-width:1px}
+button:disabled{opacity:.5; cursor:default; box-shadow:none; transform:none}
+@media (prefers-reduced-motion:reduce){ button{transition:none} }
+
+/* Discord's own blurple, so the button reads as "this goes to Discord" rather
+   than as another site action. The old version wrapped it in two stacked glows;
+   the colour alone already says it, so the glow is gone. */
+button.discord{background:#5865F2; border-color:#5865F2; color:#fff;
+  box-shadow:0 4px 0 #3A45B8}
+button.discord:hover{background:#4752C4; border-color:#4752C4}
+button.discord:disabled{box-shadow:none}
+#dcCard{border-color:#5865F2}
+
+.ppOr{display:flex; align-items:center; gap:10px; margin:18px 0 12px;
+  color:var(--legend-2); font-size:14px}
+.ppOr:before,.ppOr:after{content:""; flex:1; height:1px; background:var(--seam)}
+/* PayPal will not render its button wider than 750px however wide the container
+   is, and no SDK style option changes that. The buy button keeps its full width;
+   the PayPal button and its "or" divider are capped at 750 and centred, so the
+   narrower one sits symmetrically under the wider one instead of flush left. */
+#buyCard #ppWrap{max-width:750px; margin-left:auto; margin-right:auto}
+#ppBox{min-height:45px; display:flex; justify-content:center}
+#ppBox > *{width:100%}
+
+.msg{margin-top:14px; font-size:14.5px; min-height:20px}
+.msg.err{color:var(--state-bad)}
+.msg.ok{color:var(--state-ok)}
+.msg.warn{color:var(--signal)}
+.switch{margin-top:16px; font-size:14.5px; color:var(--legend-2); text-align:center}
+.switch a{cursor:pointer; text-decoration:underline; text-underline-offset:3px;
+  text-decoration-color:var(--seam)}
+#tsBox{margin-top:18px; min-height:65px}
+
+/* ---------- status row ---------- */
+.status{display:flex; flex-wrap:wrap; gap:14px 34px; align-items:baseline; margin:0}
+.status div{min-width:130px}
+.status dt{font-size:14px; color:var(--legend-2); margin-bottom:3px}
+.status dd{margin:0; font-size:16px; font-weight:500}
+.pill{display:inline-block; padding:3px 10px; border-radius:3px; font-size:13px;
+  font-weight:700; border:1px solid var(--state-ok); color:var(--state-ok)}
+.pill.no{border-color:var(--seam); color:var(--legend-2)}
+
+/* ---------- download ---------- */
+.dl{display:flex; flex-wrap:wrap; align-items:center; gap:16px; justify-content:space-between}
+.dl .meta{font-size:13.5px; color:var(--legend-2); line-height:1.8;
+  font-variant-numeric:tabular-nums}
+.ver{font-family:var(--display); font-weight:800; font-stretch:118%; font-size:28px;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.notes{margin:18px 0 0; padding-left:20px; color:var(--legend-2); font-size:15px}
+.notes li{margin:7px 0}
+.hash{word-break:break-all; font-size:12px; color:var(--legend-2); margin-top:16px;
+  letter-spacing:.01em}
+
+/* ---------- install steps ---------- */
+ol.steps{margin:0; padding-left:22px; font-size:15px}
+ol.steps li{margin:12px 0}
+ol.steps li::marker{color:var(--signal); font-weight:700}
+code{font-size:13.5px; background:var(--ground); border:1px solid var(--seam);
+  border-radius:3px; padding:2px 6px; letter-spacing:.01em}
+.path{display:flex; gap:8px; align-items:center; margin:9px 0 2px; flex-wrap:wrap}
+/* A bordered note, not a coloured left-edge strip. The strip is one of the most
+   reliable tells of a generated interface, and this page had one. */
+.gotcha{border:1px solid var(--signal); border-radius:0;
+  background:rgba(242,168,28,.07); padding:12px 14px; margin:12px 0 2px;
+  color:var(--legend-2); font-size:14.5px; line-height:1.6}
+.gotcha b{color:var(--legend); font-weight:600}
+
+.tabs{display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap}
+.tabs button{background:transparent; border:2px solid var(--seam); color:var(--legend);
+  border-radius:0; font-size:14px; font-weight:700; padding:8px 15px; box-shadow:none}
+.tabs button:active{transform:none}
+.tabs button[aria-selected="true"]{border-color:var(--signal); color:var(--signal)}
+
+.dev{display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:12px 0; border-bottom:1px solid #1B2648; font-size:15px}
+.dev:last-child{border-bottom:0}
+.dev span{font-size:13.5px; color:var(--legend-2)}
+
+details{border-top:1px solid #1B2648; padding:12px 0}
+details:first-of-type{border-top:0}
+summary{cursor:pointer; font-weight:600; font-size:15px}
+details .notes{margin-top:10px}
+
+.hide{display:none}
+.foot{color:var(--legend-2); font-size:14px; text-align:center; margin-top:36px}
+
+/* A file path or a mod id is one long unbreakable token, and the macOS install
+   path runs past a hundred characters. Left alone it pushes the whole page
+   sideways on a phone - the worst kind of broken, because it drags every other
+   element off screen with it. Break inside them. */
+code{overflow-wrap:anywhere; word-break:break-word}
+
+/* ---------- PHONE ----------------------------------------------------------
+   Last in the file on purpose: at equal specificity the later rule wins, so
+   overrides placed earlier silently lose to the rules they mean to override.
+   --------------------------------------------------------------------------- */
+@media (max-width:560px){
+  .bar{padding:10px 14px; min-height:56px}
+  .brand{font-size:18px; gap:9px}
+  .brand img{width:26px; height:26px}
+  .wrap{padding:24px 14px 64px}
+  .card{padding:18px 15px; margin-bottom:14px}
+  .card.center{margin:4vh auto 0; max-width:none}
+  h1{font-size:26px}
+  h2{font-size:18px}
+  /* Three install tabs share the row evenly instead of one wrapping onto its own line. */
+  .tabs{gap:5px}
+  .tabs button{flex:1 1 0; padding:9px 4px; font-size:13px}
+  /* Device name and "sign out" stack rather than crushing each other. */
+  .dev{flex-wrap:wrap}
+  .status{gap:10px 20px}
+  ol.steps{padding-left:20px; font-size:14.5px}
+  ol.steps li{margin:10px 0}
+  .gotcha{padding:11px 12px}
+  code{font-size:12.5px}
+  button{padding:11px 16px; font-size:14.5px}
+  .ver{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="brand" href="/"><img src="/mark.png" alt="" width="28" height="28">click indicators</a>
+    <nav>
+      <a href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener"><button class="ghost small" type="button">Discord</button></a>
+      <button class="ghost small hide" id="out" type="button">Sign out</button>
+    </nav>
+  </div>
+</header>
+
+<!-- ---------------- signed out ---------------- -->
+<div class="wrap hide" id="authWrap">
+  <div class="card center">
+    <h1 id="authTitle">Sign in</h1>
+    <p class="sub" id="authSub">Same account for the site and the game.</p>
+
+    <div id="authForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" placeholder="you@email.com">
+      <div id="passWrap">
+        <label for="pass">Password</label>
+        <input id="pass" type="password" autocomplete="current-password" placeholder="At least 8 characters">
+      </div>
+      <div id="tsBox"></div>
+      <button class="wide" id="go" type="button">Sign in</button>
+      <div class="switch">
+        <span id="switchTxt">No account?</span> <a id="switchLink">Create one</a>
+      </div>
+      <div class="switch" id="forgotWrap"><a id="forgotLink">Forgot your password?</a></div>
+    </div>
+
+    <div id="codeForm" class="hide">
+      <p class="sub" style="margin:0 0 4px">Sent a 6-digit code to <b id="codeWho"></b>. Put it in
+        below and you're all set.</p>
+      <label for="code">Verification code</label>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+      <button class="wide" id="codeGo" type="button">Verify</button>
+      <div class="switch"><a id="codeAgain">Send another code</a></div>
+    </div>
+
+    <div class="msg" id="authMsg"></div>
+  </div>
+</div>
+
+<!-- ---------------- signed in ---------------- -->
+<div class="wrap hide" id="dashWrap">
+  <h1>Your account</h1>
+  <p class="sub" id="who"></p>
+
+  <div class="card hide" id="dcCard">
+    <p class="kicker">Discord</p>
+    <h2>Get your Pro role</h2>
+    <p class="sub" style="margin:2px 0 0" id="dcSub">Link your Discord and you'll get the Pro role
+      automatically, which opens the buyers-only channels. Join the server first, otherwise there's
+      nobody for the bot to give the role to.</p>
+    <div class="dl" style="margin-top:16px">
+      <div class="meta" id="dcState"></div>
+      <div style="display:flex;gap:8px">
+        <a id="dcJoin" class="hide" href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener"><button class="ghost" type="button">Join the server</button></a>
+        <button id="dcLink" class="discord" type="button">Link Discord</button>
+        <button id="dcUnlink" class="ghost hide" type="button">Unlink</button>
+      </div>
+    </div>
+    <div class="msg" id="dcMsg"></div>
+  </div>
+
+  <div class="card">
+    <dl class="status">
+      <div><dt>Licence</dt><dd id="stLic"></dd></div>
+      <div><dt>Latest version</dt><dd id="stVer">—</dd></div>
+      <div><dt>Signed in on</dt><dd id="stDev">—</dd></div>
+    </dl>
+  </div>
+
+  <!-- not verified -->
+  <div class="card hide" id="verifyCard">
+    <p class="kicker">Almost there</p>
+    <h2>Verify your email</h2>
+    <p class="sub" style="margin:2px 0 0">Check your inbox for a 6-digit code. Sorry, you do need this
+      before you can buy.</p>
+    <label for="code2">Verification code</label>
+    <input id="code2" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000">
+    <button class="wide" id="code2Go" type="button">Verify</button>
+    <div class="switch"><a id="code2Again">Send another code</a></div>
+    <div class="msg" id="verifyMsg"></div>
+  </div>
+
+  <!-- not purchased -->
+  <div class="card hide" id="buyCard">
+    <p class="kicker">Not purchased</p>
+    <h2>Get Click Indicators</h2>
+    <p class="sub" style="margin:2px 0 0">Pay once and it's yours. The download shows up on this page
+      right after.</p>
+    <button class="wide" id="buyBtn" type="button">Buy Click Indicators — $2.99</button>
+    <!-- Only rendered when the server reports a PayPal client id, so a half-configured deploy
+         shows one working checkout rather than a button that dead-ends. -->
+    <div id="ppWrap" class="hide">
+      <div class="ppOr"><span>or</span></div>
+      <div id="ppBox"></div>
+    </div>
+    <p class="sub" style="margin:12px 0 0;font-size:13.5px">All sales are final, there are no refunds.
+      Works on one device at a time. By buying you're agreeing to the
+      <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</p>
+    <div class="msg" id="buyMsg"></div>
+    <p class="sub" style="margin:10px 0 0;font-size:13.5px">Already paid and still seeing this?
+      <a href="#" id="reclaimBtn">Recover your purchase</a>.</p>
+  </div>
+
+  <!-- purchased -->
+  <div class="card hide" id="dlCard">
+    <p class="kicker">Download</p>
+    <div class="dl">
+      <div>
+        <div class="ver" id="dlVer">—</div>
+        <div class="meta" id="dlMeta"></div>
+      </div>
+      <button id="dlBtn" type="button">Download .geode</button>
+    </div>
+    <ul class="notes" id="dlNotes"></ul>
+    <div class="hash" id="dlHash"></div>
+    <div class="msg" id="dlMsg"></div>
+  </div>
+
+  <div class="card hide" id="installCard">
+    <p class="kicker">Install</p>
+    <h2>Installing it yourself</h2>
+    <p class="sub" style="margin:2px 0 14px">Click Indicators isn't on the Geode index, so you install it
+      from the file above instead of the in-game browser. It's still a totally normal Geode mod &mdash; dropping
+      the file in the mods folder is all the index would have done for you anyway.</p>
+
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabWin" aria-selected="true">Windows</button>
+      <button type="button" role="tab" id="tabMac" aria-selected="false">macOS</button>
+      <button type="button" role="tab" id="tabDro" aria-selected="false">Android</button>
+    </div>
+
+    <div id="stepsWin">
+      <ol class="steps">
+        <li><b>Install Geode</b> first if you haven't already, from
+          <a href="https://geode-sdk.org/install/" target="_blank" rel="noopener">geode-sdk.org/install</a>.
+          Then launch Geometry Dash once so Geode makes its folders.</li>
+        <li><b>Close Geometry Dash.</b> Geode only loads mods when the game starts up, so adding one to
+          a running game does nothing. Easily the most common reason an install looks broken.</li>
+        <li><b>Open your Geometry Dash folder.</b> In Steam: right-click Geometry Dash &rarr;
+          <em>Manage</em> &rarr; <em>Browse local files</em>. Usually:
+          <div class="path"><code>C:\Program Files (x86)\Steam\steamapps\common\Geometry Dash</code></div>
+          <div class="gotcha"><b>Not the one in AppData.</b> There's a second
+            <code>geode\mods</code> at <code>%LOCALAPPDATA%\GeometryDash\geode\mods</code> and it's
+            the wrong one. That one holds settings, and a mod dropped in there is ignored with no
+            error at all. Quick way to tell: the <b>right</b> folder is full of <code>.geode</code>
+            <b>files</b>. The AppData one is full of <b>folders</b> named like
+            <code>hjfod.betteredit</code>. Looking at folders means you're in the wrong place.</div>
+        </li>
+        <li><b>Drop the file into <code>geode\mods</code></b> inside that folder. Leave the name as
+          <code>jackz.click-indicators.geode</code>.</li>
+        <li><b>Start the game.</b> Click Indicators shows up in the Geode mods list and puts a button
+          on the main menu.</li>
+        <li><b>Sign in</b> inside the mod with this same email and password.</li>
+      </ol>
+    </div>
+
+    <div id="stepsMac" class="hide">
+      <ol class="steps">
+        <li><b>Install Geode</b> first if you haven't already, from
+          <a href="https://geode-sdk.org/install/" target="_blank" rel="noopener">geode-sdk.org/install</a>.
+          Then launch Geometry Dash once so Geode makes its folders.</li>
+        <li><b>Quit Geometry Dash.</b> Geode only loads mods when the game starts up, so adding one
+          to a running game does nothing. Easily the most common reason an install looks broken.</li>
+        <li><b>Open the Geode mods folder.</b> It is <em>inside</em> the app itself:
+          <div class="path"><code>~/Library/Application Support/Steam/steamapps/common/Geometry Dash/Geometry Dash.app/Contents/geode/mods</code></div>
+          In Finder press <kbd>&#8679;&#8984;G</kbd> (<em>Go &rarr; Go to Folder&hellip;</em>) and paste that whole path &mdash; it
+          will go inside the app for you. Or find <b>Geometry Dash.app</b>, right-click it &rarr;
+          <em>Show Package Contents</em> &rarr; <code>Contents</code> &rarr; <code>geode</code> &rarr;
+          <code>mods</code>.
+          <div class="gotcha"><b>Not the one in Application Support.</b> There is a second
+            <code>geode/mods</code> at
+            <code>~/Library/Application Support/GeometryDash/geode/mods</code> and it is the wrong
+            one. Note it has no <em>Steam</em> in the path and no space in <em>GeometryDash</em>.
+            That one holds settings, and a mod dropped in there is ignored with no error at all.
+            Quick way to tell: the <b>right</b> folder is full of <code>.geode</code> <b>files</b>.
+            The wrong one is full of <b>folders</b> named like <code>zhulis.blitzkrieg</code>. If
+            you are looking at folders, you are in the wrong place.</div>
+        </li>
+        <li><b>Drop the file in there</b>, leaving the name as <code>jackz.click-indicators.geode</code>.</li>
+        <li><b>Start the game</b> and sign in inside the mod with this email and password.</li>
+      </ol>
+      <p class="sub" style="margin-top:14px">The download is one file covering Intel Macs and Apple
+        Silicon, so you do not need to pick a version. If Geometry Dash is not installed through
+        Steam, the path is the same from <code>Geometry Dash.app</code> onwards, wherever that app
+        happens to live.</p>
+    </div>
+
+    <!-- This block used to sit OUTSIDE #installCard - the card closed above it - so choosing
+         Android rendered the steps floating between two panels with no card around them. -->
+    <div id="stepsDro" class="hide">
+      <ol class="steps">
+        <li><b>Install Geode</b> first if you haven't already, from
+          <a href="https://geode-sdk.org/install/" target="_blank" rel="noopener">geode-sdk.org/install</a>.
+          Then open Geometry Dash once so Geode sets itself up.</li>
+        <li><b>Download the file above on your phone.</b> Tapping Download in your phone's browser
+          is enough, it lands in your Downloads folder. You don't need a computer for any of this.</li>
+        <li><b>Open Geometry Dash</b> and go to the Geode menu, then the mods screen.</li>
+        <li><b>Tap "Install from file"</b> and pick <code>jackz.click-indicators.geode</code> from
+          your Downloads in the file picker that opens.</li>
+        <li><b>Restart the game</b> when it asks. Click Indicators then appears in your mods list
+          and adds its button to the main menu.</li>
+        <li><b>Sign in</b> inside the mod with this same email and password.</li>
+      </ol>
+      <div class="gotcha"><b>Free camera and the click editor won't work on a phone.</b> They need
+        a keyboard, so they're desktop only. Everything else, all five cue styles, sounds,
+        calibration and macro downloads, works the same.</div>
+    </div>
+
+    <p class="sub" style="margin-top:18px"><b>Updating:</b> grab the new file and swap it for the old
+      one in the same <code>geode</code> mods folder as above, game closed. Your settings and saved
+      macros stay put, they live outside the mod file.</p>
+    <p class="sub" style="margin-top:8px"><b>Uninstalling:</b> delete it from that folder, or just
+      switch the mod off in the Geode menu.</p>
+  </div>
+
+  <div class="card hide" id="devCard">
+    <p class="kicker">Device</p>
+    <h2>Where your licence is right now</h2>
+    <p class="sub" style="margin:2px 0 8px">Click Indicators works on <b>one device at a time</b>. If you
+      sign in on another PC the licence moves there and this one gets signed out, so you don't need this
+      page to switch machines. Hit Remove below if you want it signed out right now.</p>
+    <div id="devices"></div>
+  </div>
+
+  <div class="card hide" id="histCard">
+    <p class="kicker">Update history</p>
+    <h2>What changed before</h2>
+    <p class="sub" style="margin:2px 0 12px">Only the newest build is downloadable. No point handing out
+      old ones when the bugs are already fixed.</p>
+    <div id="history"></div>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Security</p>
+    <h2>Change your password</h2>
+    <p class="sub" style="margin:2px 0 0">If we sent you a temporary one, swap it for something
+      you'll actually remember. Changing it here signs out any other browser, but leaves the game
+      signed in.</p>
+    <label for="pwCur">Current password</label>
+    <input id="pwCur" type="password" autocomplete="current-password">
+    <label for="pwNew">New password</label>
+    <input id="pwNew" type="password" autocomplete="new-password" placeholder="At least 8 characters">
+    <button class="wide" id="pwGo" type="button">Change password</button>
+    <div class="msg" id="pwMsg"></div>
+  </div>
+
+  <div class="card">
+    <p class="kicker">Help</p>
+    <h2>Something broken?</h2>
+    <p class="sub" style="margin:2px 0 0">Ask in the
+      <a href="https://discord.gg/FncjJJNcES" target="_blank" rel="noopener">Discord</a>. If the guide itself
+      is acting up, turn on <em>Debug logging</em> in the mod settings, make it happen once, then attach
+      <code>geode/logs</code> from your Geometry Dash folder.</p>
+  </div>
+
+  <p class="foot"><a href="/">clickindicators.com</a> &nbsp; <a href="/terms">Terms</a>
+    &nbsp; <a href="/privacy">Privacy</a></p>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var ME = null, REL = null, mode = "login", pendingEmail = "";
+
+  // Set from /api/release, which reports whether the server holds a live Stripe key.
+  // Starts false so a failed request shows "Launching soon" rather than taking money
+  // through a test key.
+  var LAUNCHED = false;
+
+  function say(el, t, cls){ var m = $(el); m.textContent = t || ""; m.className = "msg " + (cls || ""); }
+
+  async function api(path, body, method){
+    var r = await fetch(path, {
+      method: method || (body ? "POST" : "GET"),
+      headers: body ? { "content-type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: "same-origin"
+    });
+    return { status: r.status, data: await r.json().catch(function(){ return {}; }) };
+  }
+
+  function bytes(n){ return n ? (n / 1048576).toFixed(2) + " MB" : ""; }
+  function when(iso){
+    // Built as a local date, not parsed as UTC: "2026-07-31" read as UTC midnight
+    // renders as the 30th for anyone west of Greenwich, so a release looks a day
+    // older than it is to most of the people reading it.
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    if (!m) return iso || "";
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return d.toLocaleDateString(undefined, { year:"numeric", month:"long", day:"numeric" });
+  }
+  function noteList(notes){
+    var ul = document.createElement("ul"); ul.className = "notes";
+    (notes || []).forEach(function(n){
+      var li = document.createElement("li"); li.textContent = n; ul.appendChild(li);
+    });
+    return ul;
+  }
+
+  /* ---------------- Turnstile ----------------
+     Rendered explicitly so each attempt can reset its own widget: tokens are
+     single-use and this form stays on screen after a failed sign-in. */
+  var TS_SITEKEY = "0x4AAAAAAEALgQ3gM0S24tOy", tsId = null;
+
+  /* Unlike the front page - where the widget is rendered when someone opens the
+     sign-in modal, long after the page settled - this form is on screen the moment
+     the page loads, which can be before the async Turnstile script has run. Waiting
+     for it matters: sign-in fails closed on the server, so a widget that never
+     rendered is an account nobody can get into. */
+  function whenTurnstile(cb){
+    if (window.turnstile && window.turnstile.render) { cb(); return; }
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (window.turnstile && window.turnstile.render) { clearInterval(iv); cb(); }
+      else if (++tries > 150) {                       // ~15s
+        clearInterval(iv);
+        say("authMsg", "The bot check could not load. Disable anything blocking " +
+                       "challenges.cloudflare.com and reload.", "err");
+      }
+    }, 100);
+  }
+
+  function tsRender(){
+    var box = $("tsBox");
+    if (!box) return;
+    whenTurnstile(function(){
+      if (tsId !== null) { try { window.turnstile.remove(tsId); } catch(e){} tsId = null; }
+      box.innerHTML = "";
+      tsId = window.turnstile.render(box, {
+        sitekey: TS_SITEKEY,
+        // Must match what the server checks for this endpoint, or siteverify rejects it.
+        action: mode,
+        theme: window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"
+      });
+    });
+  }
+  function tsToken(){
+    try { return (tsId !== null && window.turnstile) ? window.turnstile.getResponse(tsId) : ""; }
+    catch(e){ return ""; }
+  }
+  function tsReset(){ try { if (tsId !== null && window.turnstile) window.turnstile.reset(tsId); } catch(e){} }
+
+  /* ---------------- painting ---------------- */
+  function paint(){
+    var inn = !!ME;
+    $("authWrap").classList.toggle("hide", inn);
+    $("dashWrap").classList.toggle("hide", !inn);
+    $("out").classList.toggle("hide", !inn);
+    if (!inn){ paintAuth(); return; }
+
+    var paid = !!ME.paid, verified = !!ME.verified;
+    $("who").textContent = ME.email;
+    $("stLic").innerHTML = paid
+      ? '<span class="pill">Owned</span>'
+      : '<span class="pill no">' + (verified ? "Not purchased" : "Unverified") + '</span>';
+    var devs = ME.devices || [];
+    $("stDev").textContent = devs.length ? (devs[0].name || "PC") : "No device";
+
+    $("verifyCard").classList.toggle("hide", verified);
+    $("buyCard").classList.toggle("hide", paid || !verified);
+    $("dlCard").classList.toggle("hide", !paid);
+    $("installCard").classList.toggle("hide", !paid);
+    $("devCard").classList.toggle("hide", !paid);
+
+    $("buyBtn").textContent = LAUNCHED ? "Buy Click Indicators — $2.99" : "Launching soon";
+    $("buyBtn").disabled = !LAUNCHED;
+
+    var list = $("devices"); list.innerHTML = "";
+    devs.forEach(function(d){
+      var row = document.createElement("div"); row.className = "dev";
+      var lastSeen = new Date(d.last_seen * 1000).toLocaleDateString();
+      var label = document.createElement("div");
+      label.innerHTML = "";
+      label.appendChild(document.createTextNode((d.name || "PC") + " "));
+      var s = document.createElement("span"); s.textContent = "last used " + lastSeen;
+      label.appendChild(s);
+      var b = document.createElement("button");
+      b.className = "ghost small"; b.type = "button"; b.textContent = "Remove";
+      b.onclick = async function(){ b.disabled = true; await api("/api/device/remove", { id: d.id }); await load(); };
+      row.appendChild(label); row.appendChild(b); list.appendChild(row);
+    });
+    if (!devs.length)
+      list.innerHTML = '<div class="dev"><span>Not signed in anywhere yet, do that from ' +
+                       'inside Geometry Dash</span></div>';
+
+    // Only shown to buyers, and only once the server actually has the Discord app configured -
+    // a Link button that 503s is worse than no button.
+    var dcOn = paid && ME.discord_available;
+    $("dcCard").classList.toggle("hide", !dcOn);
+    if (dcOn) {
+      var linked = !!ME.discord_linked;
+      $("dcState").textContent = linked ? "Linked. You should have the Pro role."
+                                        : "Not linked yet.";
+      $("dcLink").classList.toggle("hide", linked);
+      $("dcUnlink").classList.toggle("hide", !linked);
+      $("dcJoin").classList.toggle("hide", linked);
+    }
+
+    paintRelease();
+  }
+
+  function paintAuth(){
+    var forgotMode = mode === "forgot";
+    $("authTitle").textContent = forgotMode ? "Reset your password"
+                              : mode === "login" ? "Sign in" : "Create account";
+    $("authSub").textContent   = forgotMode
+      ? "Put in your email and we'll send you a link to set a new one."
+      : "Same account for the site and the game.";
+    $("go").textContent        = forgotMode ? "Send the link"
+                              : mode === "login" ? "Sign in" : "Create account";
+    // No password field when you are telling us you do not know it.
+    $("passWrap").classList.toggle("hide", forgotMode);
+    $("switchTxt").textContent  = forgotMode ? "Remembered it?"
+                               : mode === "login" ? "No account?" : "Already have one?";
+    $("switchLink").textContent = forgotMode ? "Sign in"
+                               : mode === "login" ? "Create one" : "Sign in";
+    $("forgotWrap").classList.toggle("hide", mode !== "login");
+    $("pass").autocomplete = mode === "signup" ? "new-password" : "current-password";
+  }
+
+  function paintRelease(){
+    if (!REL) return;
+    var L = REL.latest;
+    $("stVer").textContent = L.version;
+    $("dlVer").textContent = L.version;
+    $("dlMeta").innerHTML = "";
+    $("dlMeta").appendChild(document.createTextNode(when(L.date) + " · " + bytes(L.size)));
+    var notes = $("dlNotes"); notes.innerHTML = "";
+    (L.notes || []).forEach(function(n){
+      var li = document.createElement("li"); li.textContent = n; notes.appendChild(li);
+    });
+    // The published build's hash - NOT the hash of the file you are about to get. Every download
+    // carries 32 bytes identifying the account, so no two are the same file and none of them match
+    // this. Saying so out loud is also the cheapest deterrent there is: the people who share a paid
+    // build mostly have not considered that the copy is theirs.
+    $("dlHash").textContent = L.sha256 ? "Published build SHA-256  " + L.sha256 : "";
+    var tagNote = document.getElementById("dlTagNote");
+    if (!tagNote && $("dlHash").parentNode) {
+      tagNote = document.createElement("div");
+      tagNote.id = "dlTagNote";
+      tagNote.className = "muted small";
+      tagNote.textContent = "Your download is tagged to your account. Please don't share it - "
+        + "a shared copy is traceable back here.";
+      $("dlHash").parentNode.appendChild(tagNote);
+    }
+
+    // Everything older is described but never offered.
+    var older = (REL.history || []).filter(function(h){ return h.version !== L.version; });
+    $("histCard").classList.toggle("hide", !(ME && ME.paid) || !older.length);
+    var box = $("history"); box.innerHTML = "";
+    older.forEach(function(h){
+      var d = document.createElement("details");
+      var s = document.createElement("summary"); s.textContent = h.version;
+      d.appendChild(s); d.appendChild(noteList(h.notes)); box.appendChild(d);
+    });
+  }
+
+  /* ---------------- data ---------------- */
+  async function load(){
+    var r = await api("/api/me");
+    ME = (r.status === 200 && r.data.ok) ? r.data : null;
+    paint();
+    if (!ME) tsRender();
+  }
+  async function loadRelease(){
+    var r = await api("/api/release");
+    if (!(r.data && r.data.ok)) return;
+    REL = r.data;
+    LAUNCHED = !!r.data.live;
+    ppInit(r.data.paypal_client_id);   // no client id configured -> no PayPal button, no dead end
+    paintRelease();
+    if (ME) paint();          // the buy button's label depends on LAUNCHED
+  }
+
+  /* ---------------- auth ---------------- */
+  $("switchLink").onclick = function(){
+    mode = mode === "login" ? "signup" : "login";
+    say("authMsg", ""); paintAuth(); tsRender();   // the action changes with the mode
+  };
+
+  function showCodeForm(email){
+    pendingEmail = email;
+    $("authForm").classList.add("hide");
+    $("codeForm").classList.remove("hide");
+    $("authTitle").textContent = "Check your email";
+    $("authSub").textContent = "";
+    $("codeWho").textContent = email;
+    $("code").focus();
+  }
+
+  $("go").onclick = async function(){
+    var email = $("email").value.trim(), pass = $("pass").value;
+    var token = tsToken();
+    if (!email) { say("authMsg", "Enter your email address.", "err"); return; }
+    if (mode !== "forgot" && !pass) { say("authMsg", "Enter your password.", "err"); return; }
+    if (!token) { say("authMsg", "Complete the bot check first.", "err"); return; }
+    $("go").disabled = true; say("authMsg", "Working…");
+
+    if (mode === "forgot") {
+      var f = await api("/api/forgot", { email: email, "cf-turnstile-response": token });
+      $("go").disabled = false; tsReset();
+      // The server answers the same whether or not the address is registered, so this message
+      // has to be worded so it is true either way.
+      say("authMsg", f.data.ok
+        ? "If that address has an account, a reset link is on its way. It expires in an hour."
+        : (f.data.error || "Couldn't send that."), f.data.ok ? "ok" : "err");
+      return;
+    }
+
+    var r = await api(mode === "login" ? "/api/login" : "/api/signup",
+                      { email: email, password: pass, "cf-turnstile-response": token });
+    $("go").disabled = false;
+    tsReset();                                     // the token is spent, get a fresh one
+    if (!r.data.ok) { say("authMsg", r.data.error || "Something went wrong.", "err"); return; }
+    say("authMsg", "");
+    // Signup with a mailer configured returns verified:false and has already sent a code.
+    if (mode === "signup" && r.data.verified === false) { showCodeForm(email); return; }
+    await load();
+  };
+
+  $("forgotLink").onclick = function(){
+    mode = "forgot"; say("authMsg", ""); paintAuth(); tsRender();
+  };
+
+  $("pwGo").onclick = async function(){
+    var cur = $("pwCur").value, nw = $("pwNew").value;
+    if (!cur || !nw) { say("pwMsg", "Fill in both fields.", "err"); return; }
+    if (nw.length < 8) { say("pwMsg", "New password needs at least 8 characters.", "err"); return; }
+    $("pwGo").disabled = true; say("pwMsg", "Changing…");
+    var r = await api("/api/password", { current: cur, password: nw });
+    $("pwGo").disabled = false;
+    if (!r.data.ok) { say("pwMsg", r.data.error || "Couldn't change it.", "err"); return; }
+    $("pwCur").value = ""; $("pwNew").value = "";
+    say("pwMsg", "Changed. Use the new one next time you sign in.", "ok");
+  };
+
+  async function submitCode(codeEl, msgEl, btn){
+    var code = $(codeEl).value.trim();
+    if (code.length !== 6) { say(msgEl, "Enter the six-digit code.", "err"); return; }
+    $(btn).disabled = true; say(msgEl, "Checking…");
+    var r = await api("/api/verify", { email: pendingEmail || (ME && ME.email), code: code });
+    $(btn).disabled = false;
+    if (!r.data.ok) { say(msgEl, r.data.error || "Wrong code.", "err"); return; }
+    say(msgEl, "");
+    $("codeForm").classList.add("hide");
+    $("authForm").classList.remove("hide");
+    await load();
+  }
+  async function again(msgEl){
+    say(msgEl, "Sending…");
+    var r = await api("/api/resend-code", { email: pendingEmail || (ME && ME.email) });
+    say(msgEl, r.data.ok ? "Sent. Check your email." : (r.data.error || "Couldn't send."),
+        r.data.ok ? "ok" : "err");
+  }
+
+  $("codeGo").onclick    = function(){ submitCode("code",  "authMsg",   "codeGo"); };
+  $("code2Go").onclick   = function(){ submitCode("code2", "verifyMsg", "code2Go"); };
+  $("codeAgain").onclick  = function(){ again("authMsg"); };
+  $("code2Again").onclick = function(){ again("verifyMsg"); };
+
+  $("out").onclick = async function(){
+    await api("/api/logout", {});
+    ME = null; mode = "login"; pendingEmail = "";
+    $("codeForm").classList.add("hide"); $("authForm").classList.remove("hide");
+    $("authSub").textContent = "Same account for the site and the game.";
+    paint(); tsRender();
+  };
+
+  /* ---------------- buy ---------------- */
+  $("buyBtn").onclick = async function(){
+    if (!LAUNCHED) { say("buyMsg", "Not on sale yet — join the Discord and you will hear first.", "err"); return; }
+    $("buyBtn").disabled = true; say("buyMsg", "Opening checkout…");
+    var r = await api("/api/checkout", {});
+    if (r.data.ok && r.data.url) { location.href = r.data.url; return; }
+    $("buyBtn").disabled = false; say("buyMsg", r.data.error || "Couldn't start checkout.", "err");
+  };
+
+  /* ---------------- recover a purchase ----------------
+     A webhook is a delivery promise, not a guarantee, and someone who has actually paid should
+     not have to email support and wait because one did not arrive. The server asks Stripe whether
+     this account paid, so nothing here decides anything. */
+  $("reclaimBtn").onclick = async function(e){
+    e.preventDefault();
+    say("buyMsg", "Checking with the payment processor…");
+    var r = await api("/api/reclaim", {});
+    if (r.data.ok) {
+      say("buyMsg", r.data.already ? "You already have access." : "Found it — unlocking your account…", "ok");
+      await load();
+      return;
+    }
+    say("buyMsg", r.data.error || "Couldn't check right now.", "err");
+  };
+
+  /* ---------------- paypal ----------------
+     Stripe cannot process PayPal for a US merchant, so this is a direct integration.
+     Nothing here is trusted: the order is created server-side at a price this page never
+     sends, and onApprove only tells the server an order finished - the server then asks
+     PayPal itself and grants on that answer alone. A faked call to /api/paypal/capture
+     gets a 402, because the order will not read COMPLETED. */
+  var ppLoaded = false;
+  function ppInit(clientId){
+    if (ppLoaded || !clientId || !LAUNCHED) return;
+    ppLoaded = true;
+    var s = document.createElement("script");
+    // Cards are deliberately left to Stripe - cheaper, and fewer disputes than routing them
+    // through PayPal. Pay Later on a $2.99 mod is not something anyone needs.
+    s.src = "https://www.paypal.com/sdk/js?client-id=" + encodeURIComponent(clientId) +
+            "&currency=USD&components=buttons&disable-funding=credit,paylater,card";
+    s.onerror = function(){ $("ppWrap").classList.add("hide"); };
+    s.onload = function(){
+      if (!window.paypal) { $("ppWrap").classList.add("hide"); return; }
+      $("ppWrap").classList.remove("hide");
+      window.paypal.Buttons({
+        // Vertical, not horizontal. The horizontal layout is built for two funding buttons
+        // side by side and keeps the gutter for the second one even when there is only one -
+        // which left the PayPal button narrower than the green button above it and hanging
+        // off to the left. Vertical gives a single full-width button that lines up.
+        // 45px matches button.wide: 12px padding top and bottom around a 15px line.
+        // tagline is not valid with vertical layout, so it is gone.
+        style: { layout: "vertical", shape: "rect", height: 45, label: "paypal" },
+        createOrder: async function(){
+          var r = await api("/api/paypal/order", {});
+          if (!r.data.ok || !r.data.id) throw new Error(r.data.error || "Couldn't start PayPal.");
+          return r.data.id;
+        },
+        onApprove: async function(data){
+          say("buyMsg", "Confirming payment…");
+          var r = await api("/api/paypal/capture", { orderID: data.orderID });
+          if (r.data.ok) { say("buyMsg", "Payment received — unlocking your account…", "ok"); await load(); }
+          else say("buyMsg", r.data.error || "PayPal didn't complete that payment.", "err");
+        },
+        onError: function(){
+          say("buyMsg", "PayPal had a problem — the card checkout above still works.", "err");
+        }
+      }).render("#ppBox").catch(function(){ $("ppWrap").classList.add("hide"); });
+    };
+    document.head.appendChild(s);
+  }
+
+  /* ---------------- download ----------------
+     Fetched rather than linked so an expired session shows the reason here
+     instead of saving the error page as a .geode. */
+  $("dlBtn").onclick = async function(){
+    var btn = $("dlBtn");
+    btn.disabled = true; say("dlMsg", "Preparing download…");
+    try {
+      var r = await fetch("/api/download", { credentials: "same-origin" });
+      if (!r.ok) {
+        var e = await r.json().catch(function(){ return {}; });
+        say("dlMsg", e.error || ("Download failed (" + r.status + ")."), "err");
+        btn.disabled = false;
+        if (r.status === 401) await load();
+        return;
+      }
+      var blob = await r.blob();
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (REL && REL.latest.filename) || "jackz.click-indicators.geode";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 30000);
+      say("dlMsg", "Got it. Close Geometry Dash before you drop it in geode\\mods.", "ok");
+    } catch (err) {
+      say("dlMsg", "Download failed. Check your connection and try again.", "err");
+    }
+    btn.disabled = false;
+  };
+
+  /* ---------------- discord ---------------- */
+  $("dcLink").onclick = function(){ location.href = "/api/discord/start"; };
+  $("dcUnlink").onclick = async function(){
+    $("dcUnlink").disabled = true; say("dcMsg", "Unlinking…");
+    await api("/api/discord/unlink", {});
+    $("dcUnlink").disabled = false; say("dcMsg", "");
+    await load();
+  };
+
+  // The callback bounces back here with a result, because an OAuth redirect cannot return JSON.
+  var DC_MSG = {
+    ok:                "Linked. The Pro role should be on your account now.",
+    "not-in-server":   "Linked, but you're not in the Discord server yet - join it and hit Link again.",
+    "bot-role-too-low":"Linked, but the bot couldn't assign the role. That's our end, tell us in the Discord.",
+    taken:             "That Discord account is already linked to a different licence.",
+    expired:           "That took too long. Hit Link Discord again.",
+    cancelled:         "Cancelled, nothing changed.",
+    failed:            "Discord didn't complete the link. Try again in a minute.",
+    unreachable:       "Couldn't reach Discord just then. Try again shortly.",
+    off:               "Discord linking isn't switched on yet."
+  };
+
+  /* ---------------- platform tabs ---------------- */
+  function tab(which){
+    var map = { win: ["tabWin","stepsWin"], mac: ["tabMac","stepsMac"], dro: ["tabDro","stepsDro"] };
+    for (var k in map) {
+      $(map[k][0]).setAttribute("aria-selected", k === which ? "true" : "false");
+      $(map[k][1]).classList.toggle("hide", k !== which);
+    }
+  }
+  $("tabWin").onclick = function(){ tab("win"); };
+  $("tabMac").onclick = function(){ tab("mac"); };
+  $("tabDro").onclick = function(){ tab("dro"); };
+  if (/Android/i.test(navigator.userAgent || "")) tab("dro");
+  else if (/Mac/i.test(navigator.platform || "")) tab("mac");
+
+  /* ---------------- go ---------------- */
+  var q = new URLSearchParams(location.search);
+  loadRelease();
+  load().then(function(){
+    if (q.get("paid")) say("buyMsg", "Payment went through, your download is below.", "ok");
+    else if (q.get("cancelled")) say("buyMsg", "Checkout cancelled.", "");
+    var d = q.get("discord");
+    if (d) {
+      // discordRole can hand back "error-401", "error-500" and so on, and none of those are in
+      // the map above - so a buyer whose link failed was told "something went wrong" and nothing
+      // else, which is exactly as much as it told us. A revoked bot token produced error-401 for
+      // several hours and looked identical to every other failure. Show the code.
+      var msg = DC_MSG[d];
+      if (!msg && d.indexOf("error-") === 0)
+        msg = "Discord refused that (" + d + "). It's our end, not yours - send us this code in "
+            + "the Discord and we'll sort it. Your licence is unaffected.";
+      say("dcMsg", msg || ("Something went wrong linking Discord (" + d + ")."),
+          d === "ok" ? "ok" : (d === "cancelled" ? "" : "err"));
+      // Drop the parameter so a refresh does not repeat the message.
+      history.replaceState(null, "", location.pathname);
+    }
+  });
+})();
+</script>
+</body>
+</html>

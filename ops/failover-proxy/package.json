@@ -1,0 +1,14 @@
+{
+  "name": "clickindicators-failover-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Serves clickindicatorsmod.com from outside Cloudflare while the zone's edge is broken, forwarding to the same Workers via workers.dev.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
